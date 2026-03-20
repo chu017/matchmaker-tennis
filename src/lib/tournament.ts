@@ -17,6 +17,8 @@ export interface Match {
   player1: Participant | null;
   player2: Participant | null;
   winner?: Participant | null;
+  /** Game score (e.g. "6-4, 6-3") when result is recorded */
+  score?: string | null;
   isBye?: boolean;
   /** Minimax model: P(player1 wins) */
   predictedWinProb?: number;
@@ -157,6 +159,60 @@ export function generateDraw(participants: Participant[]): TournamentDraw {
     matches: allMatches,
     rounds,
   };
+}
+
+/** Match result: winnerId required, score optional. Legacy format was just winnerId string. */
+export type MatchResultValue = string | { winnerId: string; score?: string | null }
+
+function getWinnerId(val: MatchResultValue | undefined): string | undefined {
+  if (!val) return undefined
+  return typeof val === 'string' ? val : val.winnerId || undefined
+}
+
+function getScore(val: MatchResultValue | undefined): string | null | undefined {
+  if (!val || typeof val === 'string') return undefined
+  return val.score ?? undefined
+}
+
+/**
+ * Apply stored match results to a draw (set winners, advance to next round)
+ */
+export function applyMatchResults(
+  draw: TournamentDraw,
+  results: Record<string, MatchResultValue>
+): TournamentDraw {
+  if (Object.keys(results).length === 0) return draw
+
+  const participantsById = new Map(draw.participants.map((p) => [p.id, p]))
+
+  const matches = draw.matches.map((m) => {
+    const result = results[m.id]
+    const winnerId = getWinnerId(result)
+    const score = getScore(result)
+    const winner = winnerId ? participantsById.get(winnerId) ?? null : undefined
+    return { ...m, winner: winner ?? m.winner, score }
+  })
+
+  // Advance winners to next round: r{N}-{i} is fed by r{N-1}-{2*i} and r{N-1}-{2*i+1}
+  for (let r = 2; r <= draw.rounds; r++) {
+    const prevMatches = matches.filter((m) => m.round === r - 1)
+    const currMatches = matches.filter((m) => m.round === r)
+    for (let i = 0; i < currMatches.length; i++) {
+      const left = prevMatches[i * 2]
+      const right = prevMatches[i * 2 + 1]
+      const curr = currMatches[i]
+      const idx = matches.findIndex((m) => m.id === curr.id)
+      if (idx >= 0 && left?.winner && right?.winner) {
+        matches[idx] = {
+          ...matches[idx],
+          player1: left.winner,
+          player2: right.winner,
+        }
+      }
+    }
+  }
+
+  return { ...draw, matches }
 }
 
 /**

@@ -7,12 +7,21 @@ import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { getParticipants, addParticipant } from './store.js';
+import { getParticipants, addParticipant, deleteParticipant, getMatchResults, setMatchResult, clearMatchResult } from './store.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3001;
 const MINIMAX_API_KEY = process.env.MINIMAX_API_KEY;
+const ADMIN_SECRET = process.env.ADMIN_SECRET;
+
+function requireAdmin(req, res, next) {
+  const key = req.headers['x-admin-key'] || req.query?.adminKey;
+  if (!ADMIN_SECRET || key !== ADMIN_SECRET) {
+    return res.status(401).json({ error: 'Admin authentication required' });
+  }
+  next();
+}
 
 app.use(cors({ origin: true }));
 app.use(express.json());
@@ -124,6 +133,75 @@ app.post('/api/participants', (req, res) => {
   }
 });
 
+// Public: get match results (read-only for display)
+app.get('/api/match-results', (_, res) => {
+  try {
+    res.json(getMatchResults());
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin: verify key
+app.get('/api/admin/verify', (req, res) => {
+  const key = req.headers['x-admin-key'] || req.query?.adminKey;
+  if (!ADMIN_SECRET) {
+    return res.status(503).json({ error: 'Admin not configured' });
+  }
+  if (key === ADMIN_SECRET) {
+    return res.json({ ok: true });
+  }
+  res.status(401).json({ error: 'Invalid admin key' });
+});
+
+// Admin: delete participant
+app.delete('/api/admin/participants/:id', requireAdmin, (req, res) => {
+  try {
+    const removed = deleteParticipant(req.params.id);
+    if (!removed) {
+      return res.status(404).json({ error: 'Participant not found' });
+    }
+    res.json({ deleted: removed });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin: set match result (winner + optional score)
+app.post('/api/admin/match-result', requireAdmin, (req, res) => {
+  try {
+    const { matchId, winnerId, type, score } = req.body;
+    if (!matchId || !winnerId || !type) {
+      return res.status(400).json({ error: 'matchId, winnerId, and type (singles|doubles) required' });
+    }
+    if (type !== 'singles' && type !== 'doubles') {
+      return res.status(400).json({ error: 'type must be singles or doubles' });
+    }
+    setMatchResult(type, matchId, winnerId, score ?? null);
+    res.json(getMatchResults());
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin: clear match result (query params for DELETE compatibility)
+app.delete('/api/admin/match-result', requireAdmin, (req, res) => {
+  try {
+    const matchId = req.query.matchId || req.body?.matchId;
+    const type = req.query.type || req.body?.type;
+    if (!matchId || !type) {
+      return res.status(400).json({ error: 'matchId and type (singles|doubles) required as query params' });
+    }
+    if (type !== 'singles' && type !== 'doubles') {
+      return res.status(400).json({ error: 'type must be singles or doubles' });
+    }
+    clearMatchResult(type, matchId);
+    res.json(getMatchResults());
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Serve static frontend in production (after build)
 const distPath = path.join(__dirname, '..', 'dist');
 if (fs.existsSync(path.join(distPath, 'index.html'))) {
@@ -136,4 +214,5 @@ if (fs.existsSync(path.join(distPath, 'index.html'))) {
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
   if (!MINIMAX_API_KEY) console.warn('Warning: MINIMAX_API_KEY not set');
+  if (!ADMIN_SECRET) console.warn('Warning: ADMIN_SECRET not set - admin endpoints disabled');
 });

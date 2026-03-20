@@ -12,6 +12,8 @@
 
 html {
   -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -45,7 +47,8 @@ body::before {
   }
 }
 
-/* Smooth touch scrolling */
-.overflow-x-auto {
+/* Smooth touch scrolling on iOS */
+.overflow-x-auto,
+.overflow-y-auto {
   -webkit-overflow-scrolling: touch;
 }

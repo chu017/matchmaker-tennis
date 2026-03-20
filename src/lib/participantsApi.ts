@@ -42,3 +42,20 @@ export async function addParticipant(data: {
   }
   return res.json()
 }
+
+export interface MatchResultEntry {
+  winnerId: string
+  score?: string | null
+}
+export type MatchResultValue = string | MatchResultEntry
+
+export interface MatchResults {
+  singles: Record<string, MatchResultValue>
+  doubles: Record<string, MatchResultValue>
+}
+
+export async function fetchMatchResults(): Promise<MatchResults> {
+  const res = await fetch('/api/match-results')
+  if (!res.ok) return { singles: {}, doubles: {} }
+  return res.json()
+}

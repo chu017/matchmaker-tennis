@@ -95,8 +95,8 @@ ${buildContext()}`
     <>
       <button
         onClick={() => setOpen(true)}
-        className="fixed right-4 sm:right-6 w-14 h-14 rounded-full bg-pink-primary text-white font-bold shadow-lg hover:scale-105 active:scale-95 transition-transform flex items-center justify-center touch-manipulation z-40"
-        style={{ bottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
+        className="fixed right-4 sm:right-6 w-14 h-14 min-w-[56px] min-h-[56px] rounded-full bg-pink-primary text-white font-bold shadow-lg hover:scale-105 active:scale-95 transition-transform flex items-center justify-center touch-manipulation z-40"
+        style={{ bottom: 'max(1.5rem, env(safe-area-inset-bottom, 0px))' }}
         title="Tournament Assistant"
       >
         💬
@@ -148,7 +148,7 @@ ${buildContext()}`
               )}
               <div ref={messagesEndRef} />
             </div>
-            <div className="p-4 border-t border-pink-soft bg-white pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <div className="p-4 border-t border-pink-soft bg-white pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
               <form
                 onSubmit={(e) => { e.preventDefault(); handleSend() }}
                 className="flex gap-2"

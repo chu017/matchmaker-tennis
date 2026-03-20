@@ -47,7 +47,7 @@ export function SignUpForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-3xl bg-white shadow-card p-4 sm:p-6 border border-pink-soft/50">
+    <form onSubmit={handleSubmit} className="rounded-3xl bg-white shadow-card p-4 sm:p-6 border border-pink-soft/50 touch-manipulation">
       <h2 className="font-display text-xl tracking-wider text-pink-text mb-4">
         SIGN UP
       </h2>

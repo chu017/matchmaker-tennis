@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
-import { generateDraw, TournamentDraw } from './lib/tournament'
+import { generateDraw, TournamentDraw, applyMatchResults } from './lib/tournament'
 import { applyPredictionsToDraw } from './lib/minimax'
-import { fetchParticipants, type StoredParticipant } from './lib/participantsApi'
+import { fetchParticipants, fetchMatchResults, type StoredParticipant } from './lib/participantsApi'
 import { toTournamentParticipants } from './lib/participantUtils'
 import { SignUpForm } from './components/SignUpForm'
 import { ParticipantsList } from './components/ParticipantsList'
 import { DrawTabs } from './components/DrawTabs'
 import { TournamentAssistant } from './components/TournamentAssistant'
+import { AdminPage } from './components/AdminPage'
 import { checkApiHealth } from './lib/minimaxApi'
 
 const POLL_INTERVAL_MS = 3000
@@ -14,25 +15,30 @@ const POLL_INTERVAL_MS = 3000
 function App() {
   const [participants, setParticipants] = useState<StoredParticipant[]>([])
   const [apiReady, setApiReady] = useState<boolean | null>(null)
-
   const [singlesDraw, setSinglesDraw] = useState<TournamentDraw | null>(null)
   const [doublesDraw, setDoublesDraw] = useState<TournamentDraw | null>(null)
 
-  const loadParticipants = useCallback(async () => {
+  const loadData = useCallback(async () => {
     try {
-      const data = await fetchParticipants()
+      const [data, results] = await Promise.all([fetchParticipants(), fetchMatchResults()])
       setParticipants(data)
+
       const singles = data.filter((p) => p.type === 'singles')
       const doubles = data.filter((p) => p.type === 'doubles')
+
       if (singles.length >= 2) {
         const sp = toTournamentParticipants(singles)
-        setSinglesDraw(applyPredictionsToDraw(generateDraw(sp)))
+        let draw = applyPredictionsToDraw(generateDraw(sp))
+        draw = applyMatchResults(draw, results.singles)
+        setSinglesDraw(draw)
       } else {
         setSinglesDraw(null)
       }
       if (doubles.length >= 2) {
         const dp = toTournamentParticipants(doubles)
-        setDoublesDraw(applyPredictionsToDraw(generateDraw(dp)))
+        let draw = applyPredictionsToDraw(generateDraw(dp))
+        draw = applyMatchResults(draw, results.doubles)
+        setDoublesDraw(draw)
       } else {
         setDoublesDraw(null)
       }
@@ -44,10 +50,10 @@ function App() {
   }, [])
 
   useEffect(() => {
-    loadParticipants()
-    const id = setInterval(loadParticipants, POLL_INTERVAL_MS)
+    loadData()
+    const id = setInterval(loadData, POLL_INTERVAL_MS)
     return () => clearInterval(id)
-  }, [loadParticipants])
+  }, [loadData])
 
   useEffect(() => {
     checkApiHealth()
@@ -59,6 +65,10 @@ function App() {
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href)
+  }
+
+  if (window.location.pathname === '/admin') {
+    return <AdminPage onBack={() => { window.location.href = '/' }} />
   }
 
   return (
@@ -98,9 +108,9 @@ function App() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6">
-        <div className="grid lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-1 space-y-6">
+      <main className="max-w-7xl mx-auto px-4 py-6 sm:py-8 sm:px-6 pb-[max(6rem,env(safe-area-inset-bottom))]">
+        <div className="grid lg:grid-cols-3 gap-6 sm:gap-8">
+          <div className="lg:col-span-1 space-y-6 order-2 lg:order-1">
             <SignUpForm />
             <ParticipantsList participants={participants} />
           </div>
