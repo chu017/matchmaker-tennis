@@ -47,7 +47,7 @@ export function SignUpForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-xl border border-court-line/20 bg-court-green/30 p-6">
+    <form onSubmit={handleSubmit} className="rounded-xl border border-court-line/20 bg-court-green/30 p-4 sm:p-6">
       <h2 className="font-display text-xl tracking-wider text-court-line mb-4">
         SIGN UP
       </h2>
@@ -61,7 +61,7 @@ export function SignUpForm() {
           onChange={(e) => setName(e.target.value)}
           placeholder="Player name"
           required
-          className="w-full px-4 py-2.5 rounded-lg bg-black/30 border border-court-line/20 text-court-line placeholder-court-line/50 focus:outline-none focus:ring-2 focus:ring-court-accent/50"
+          className="w-full min-h-[44px] px-4 py-3 rounded-lg bg-black/30 border border-court-line/20 text-court-line placeholder-court-line/50 focus:outline-none focus:ring-2 focus:ring-court-accent/50 touch-manipulation"
         />
         <input
             type="number"
@@ -71,12 +71,12 @@ export function SignUpForm() {
             value={rating}
           onChange={(e) => setRating(e.target.value)}
           placeholder="Self rating (default 3.0)"
-          className="w-full px-4 py-2.5 rounded-lg bg-black/30 border border-court-line/20 text-court-line placeholder-court-line/50 focus:outline-none focus:ring-2 focus:ring-court-accent/50"
+          className="w-full min-h-[44px] px-4 py-3 rounded-lg bg-black/30 border border-court-line/20 text-court-line placeholder-court-line/50 focus:outline-none focus:ring-2 focus:ring-court-accent/50 touch-manipulation"
         />
         <div>
           <label className="block text-court-line/70 text-sm mb-2">Game type</label>
           <div className="flex gap-4">
-            <label className="flex items-center gap-2 cursor-pointer">
+            <label className="flex items-center gap-2 cursor-pointer min-h-[44px] touch-manipulation">
               <input
                 type="radio"
                 name="type"
@@ -86,7 +86,7 @@ export function SignUpForm() {
               />
               <span className="text-court-line">Singles</span>
             </label>
-            <label className="flex items-center gap-2 cursor-pointer">
+            <label className="flex items-center gap-2 cursor-pointer min-h-[44px] touch-manipulation">
               <input
                 type="radio"
                 name="type"
@@ -105,13 +105,13 @@ export function SignUpForm() {
             onChange={(e) => setPartnerName(e.target.value)}
             placeholder="Partner's name"
             required={type === 'doubles'}
-            className="w-full px-4 py-2.5 rounded-lg bg-black/30 border border-court-line/20 text-court-line placeholder-court-line/50 focus:outline-none focus:ring-2 focus:ring-court-accent/50"
+            className="w-full min-h-[44px] px-4 py-3 rounded-lg bg-black/30 border border-court-line/20 text-court-line placeholder-court-line/50 focus:outline-none focus:ring-2 focus:ring-court-accent/50 touch-manipulation"
           />
         )}
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 rounded-lg font-display text-lg tracking-wider bg-court-accent text-court-green hover:bg-court-accent/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="w-full min-h-[48px] py-3 rounded-lg font-display text-lg tracking-wider bg-court-accent text-court-green hover:bg-court-accent/90 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all touch-manipulation"
         >
           {loading ? 'Signing up...' : 'Sign Up'}
         </button>

@@ -63,30 +63,30 @@ function App() {
 
   return (
     <div className="min-h-screen">
-      <header className="border-b border-court-line/20 bg-court-green/40 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-court-line/20 flex items-center justify-center">
-                <span className="text-xl">🎾</span>
+      <header className="border-b border-court-line/20 bg-court-green/40 backdrop-blur-sm sticky top-0 z-10 pt-[env(safe-area-inset-top)]">
+        <div className="max-w-7xl mx-auto px-4 py-3 sm:py-4 sm:px-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-full bg-court-line/20 flex items-center justify-center">
+                <span className="text-lg sm:text-xl">🎾</span>
               </div>
-              <div>
-                <h1 className="font-display text-2xl sm:text-3xl tracking-wider text-court-line">
+              <div className="min-w-0">
+                <h1 className="font-display text-xl sm:text-3xl tracking-wider text-court-line truncate">
                   SF TENNIS MATCHMAKER
                 </h1>
-                <p className="text-sm text-court-line/70">
-                San Francisco Tournament
-                <span className="ml-2 inline-flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                  Live
-                </span>
-              </p>
+                <p className="text-xs sm:text-sm text-court-line/70">
+                  San Francisco Tournament
+                  <span className="ml-2 inline-flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-green-400 animate-pulse" />
+                    Live
+                  </span>
+                </p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 shrink-0">
               <button
                 onClick={handleCopyLink}
-                className="px-4 py-2 rounded-lg bg-court-line/20 text-court-line hover:bg-court-line/30 transition-colors text-sm font-medium"
+                className="min-h-[44px] px-4 py-2.5 rounded-lg bg-court-line/20 text-court-line hover:bg-court-line/30 active:bg-court-line/40 transition-colors text-sm font-medium touch-manipulation w-full sm:w-auto"
               >
                 Copy link to share
               </button>
@@ -104,7 +104,7 @@ function App() {
             <SignUpForm />
             <ParticipantsList participants={participants} />
           </div>
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 order-1 lg:order-2">
             <DrawTabs singlesDraw={singlesDraw} doublesDraw={doublesDraw} />
           </div>
         </div>

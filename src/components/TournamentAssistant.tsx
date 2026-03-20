@@ -95,23 +95,24 @@ ${buildContext()}`
     <>
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-court-accent text-court-green font-bold shadow-lg hover:scale-105 transition-transform flex items-center justify-center"
+        className="fixed right-4 sm:right-6 w-14 h-14 rounded-full bg-court-accent text-court-green font-bold shadow-lg hover:scale-105 active:scale-95 transition-transform flex items-center justify-center touch-manipulation z-40"
+        style={{ bottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
         title="Tournament Assistant"
       >
         💬
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-end justify-end p-4 sm:p-6">
+        <div className="fixed inset-0 z-50 flex items-end justify-end p-0 sm:p-4 sm:p-6">
           <div className="absolute inset-0 bg-black/50" onClick={() => setOpen(false)} />
-          <div className="relative w-full max-w-md h-[70vh] max-h-[500px] rounded-xl border border-court-line/20 bg-court-green/95 backdrop-blur flex flex-col shadow-xl">
+          <div className="relative w-full max-w-md h-[85vh] sm:h-[70vh] max-h-[500px] rounded-t-xl sm:rounded-xl border border-court-line/20 bg-court-green/95 backdrop-blur flex flex-col shadow-xl">
             <div className="flex items-center justify-between p-4 border-b border-court-line/20">
               <h3 className="font-display text-lg tracking-wider text-court-line">
                 TOURNAMENT ASSISTANT
               </h3>
               <button
                 onClick={() => setOpen(false)}
-                className="text-court-line/70 hover:text-court-line"
+                className="min-w-[44px] min-h-[44px] -mr-2 flex items-center justify-center text-court-line/70 hover:text-court-line touch-manipulation"
               >
                 ✕
               </button>
@@ -147,7 +148,7 @@ ${buildContext()}`
               )}
               <div ref={messagesEndRef} />
             </div>
-            <div className="p-4 border-t border-court-line/20">
+            <div className="p-4 border-t border-court-line/20 pb-[max(1rem,env(safe-area-inset-bottom))]">
               <form
                 onSubmit={(e) => { e.preventDefault(); handleSend() }}
                 className="flex gap-2"
@@ -158,12 +159,12 @@ ${buildContext()}`
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Ask about the draw..."
                   disabled={loading}
-                  className="flex-1 px-4 py-2.5 rounded-lg bg-black/30 border border-court-line/20 text-court-line placeholder-court-line/50 focus:outline-none focus:ring-2 focus:ring-court-accent/50 disabled:opacity-50"
+                  className="flex-1 min-h-[44px] px-4 py-3 rounded-lg bg-black/30 border border-court-line/20 text-court-line placeholder-court-line/50 focus:outline-none focus:ring-2 focus:ring-court-accent/50 disabled:opacity-50 touch-manipulation"
                 />
                 <button
                   type="submit"
                   disabled={loading || !input.trim()}
-                  className="px-4 py-2.5 rounded-lg bg-court-accent text-court-green font-semibold hover:bg-court-accent/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="min-h-[44px] px-4 py-3 rounded-lg bg-court-accent text-court-green font-semibold hover:bg-court-accent/90 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation shrink-0"
                 >
                   Send
                 </button>

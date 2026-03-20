@@ -20,13 +20,13 @@ export function BracketView({ draw, showTitle = true }: BracketViewProps) {
     .sort((a, b) => a - b)
 
   return (
-    <div className={showTitle ? 'rounded-xl border border-court-line/20 bg-court-green/30 p-6 overflow-x-auto' : ''}>
+    <div className={showTitle ? 'rounded-xl border border-court-line/20 bg-court-green/30 p-4 sm:p-6 overflow-x-auto' : ''}>
       {showTitle && (
         <h2 className="font-display text-xl tracking-wider text-court-line mb-6">
           TOURNAMENT DRAW
         </h2>
       )}
-      <div className="flex gap-8 min-w-max pb-4">
+      <div className="flex gap-4 sm:gap-6 md:gap-8 min-w-max pb-4 overflow-x-auto">
         {roundNumbers.map((round) => (
           <div key={round} className="flex flex-col">
             <h3 className="font-display text-sm tracking-wider text-court-accent mb-4 text-center">
@@ -69,7 +69,7 @@ function MatchCard({
 
   return (
     <div
-      className={`w-48 rounded-lg border overflow-hidden ${
+      className={`w-36 sm:w-44 md:w-48 shrink-0 rounded-lg border overflow-hidden ${
         isBye
           ? 'border-amber-500/40 bg-amber-500/10'
           : 'border-court-line/30 bg-black/20'

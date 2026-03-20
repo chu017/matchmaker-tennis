@@ -6,6 +6,12 @@
   --court-green: #1e3a0f;
   --court-line: #f5f5dc;
   --accent-gold: #d4af37;
+  --safe-area-top: env(safe-area-inset-top, 0);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0);
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -13,4 +19,17 @@ body {
   background: linear-gradient(135deg, #0f1a0a 0%, #1a2f0d 50%, #0f1a0a 100%);
   min-height: 100vh;
   color: #e8e8e8;
+  padding-bottom: var(--safe-area-bottom);
+}
+
+/* Prevent iOS zoom on input focus (font-size < 16px triggers zoom) */
+@media (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Smooth touch scrolling */
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
 }
