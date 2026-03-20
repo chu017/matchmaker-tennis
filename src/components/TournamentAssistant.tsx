@@ -6,7 +6,8 @@ import { getRoundName } from '../lib/tournament'
 
 interface TournamentAssistantProps {
   participants: Participant[]
-  draw: TournamentDraw | null
+  singlesDraw: TournamentDraw | null
+  doublesDraw: TournamentDraw | null
 }
 
 interface Message {
@@ -14,7 +15,23 @@ interface Message {
   content: string
 }
 
-export function TournamentAssistant({ participants, draw }: TournamentAssistantProps) {
+function formatDraw(draw: TournamentDraw): string {
+  const byRound = draw.matches.reduce<Record<number, typeof draw.matches>>((acc, m) => {
+    if (!acc[m.round]) acc[m.round] = []
+    acc[m.round].push(m)
+    return acc
+  }, {})
+  return Object.keys(byRound).sort((a, b) => +a - +b).map((r) => {
+    const ms = byRound[+r]
+    return `${getRoundName(+r)}: ${ms.map((m) => {
+      const p1 = m.player1?.name ?? 'TBD'
+      const p2 = m.player2?.name ?? 'TBD'
+      return `${p1} vs ${p2}`
+    }).join('; ')}`
+  }).join('. ')
+}
+
+export function TournamentAssistant({ participants, singlesDraw, doublesDraw }: TournamentAssistantProps) {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
@@ -32,21 +49,11 @@ export function TournamentAssistant({ participants, draw }: TournamentAssistantP
         return `${p.name}${extras.length ? ` (${extras.join(', ')})` : ''}`
       }).join('; '))
     }
-    if (draw && draw.matches.length > 0) {
-      const byRound = draw.matches.reduce<Record<number, typeof draw.matches>>((acc, m) => {
-        if (!acc[m.round]) acc[m.round] = []
-        acc[m.round].push(m)
-        return acc
-      }, {})
-      const roundLines = Object.keys(byRound).sort((a, b) => +a - +b).map((r) => {
-        const ms = byRound[+r]
-        return `${getRoundName(+r)}: ${ms.map((m) => {
-          const p1 = m.player1?.name ?? 'TBD'
-          const p2 = m.player2?.name ?? 'TBD'
-          return `${p1} vs ${p2}`
-        }).join('; ')}`
-      })
-      parts.push('Draw: ' + roundLines.join('. '))
+    if (singlesDraw?.matches.length) {
+      parts.push('Singles draw: ' + formatDraw(singlesDraw))
+    }
+    if (doublesDraw?.matches.length) {
+      parts.push('Doubles draw: ' + formatDraw(doublesDraw))
     }
     return parts.length ? parts.join('\n') : 'No participants or draw yet.'
   }

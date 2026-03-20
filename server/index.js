@@ -110,7 +110,7 @@ app.post('/api/participants', (req, res) => {
     }
     const participant = addParticipant({
       name: name.trim(),
-      rating: rating != null ? Number(rating) : 1500,
+      rating: rating != null ? Number(rating) : 3.0,
       type: type === 'doubles' ? 'doubles' : 'singles',
       partnerName: type === 'doubles' && partnerName ? String(partnerName).trim() : null,
     });

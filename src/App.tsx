@@ -5,7 +5,7 @@ import { fetchParticipants, type StoredParticipant } from './lib/participantsApi
 import { toTournamentParticipants } from './lib/participantUtils'
 import { SignUpForm } from './components/SignUpForm'
 import { ParticipantsList } from './components/ParticipantsList'
-import { BracketView } from './components/BracketView'
+import { DrawTabs } from './components/DrawTabs'
 import { TournamentAssistant } from './components/TournamentAssistant'
 import { checkApiHealth } from './lib/minimaxApi'
 
@@ -13,23 +13,33 @@ const POLL_INTERVAL_MS = 3000
 
 function App() {
   const [participants, setParticipants] = useState<StoredParticipant[]>([])
-  const [draw, setDraw] = useState<TournamentDraw | null>(null)
   const [apiReady, setApiReady] = useState<boolean | null>(null)
+
+  const [singlesDraw, setSinglesDraw] = useState<TournamentDraw | null>(null)
+  const [doublesDraw, setDoublesDraw] = useState<TournamentDraw | null>(null)
 
   const loadParticipants = useCallback(async () => {
     try {
       const data = await fetchParticipants()
       setParticipants(data)
-      if (data.length >= 2) {
-        const tournamentParticipants = toTournamentParticipants(data)
-        const rawDraw = generateDraw(tournamentParticipants)
-        setDraw(applyPredictionsToDraw(rawDraw))
+      const singles = data.filter((p) => p.type === 'singles')
+      const doubles = data.filter((p) => p.type === 'doubles')
+      if (singles.length >= 2) {
+        const sp = toTournamentParticipants(singles)
+        setSinglesDraw(applyPredictionsToDraw(generateDraw(sp)))
       } else {
-        setDraw(null)
+        setSinglesDraw(null)
+      }
+      if (doubles.length >= 2) {
+        const dp = toTournamentParticipants(doubles)
+        setDoublesDraw(applyPredictionsToDraw(generateDraw(dp)))
+      } else {
+        setDoublesDraw(null)
       }
     } catch {
       setParticipants([])
-      setDraw(null)
+      setSinglesDraw(null)
+      setDoublesDraw(null)
     }
   }, [])
 
@@ -95,24 +105,15 @@ function App() {
             <ParticipantsList participants={participants} />
           </div>
           <div className="lg:col-span-2">
-            {draw ? (
-              <BracketView draw={draw} />
-            ) : (
-              <div className="rounded-xl border-2 border-dashed border-court-line/30 bg-court-green/20 p-12 text-center">
-                <p className="text-court-line/60 text-lg mb-2">
-                  {participants.length < 2
-                    ? 'At least 2 participants needed for the draw'
-                    : 'Generating draw...'}
-                </p>
-                <p className="text-court-line/40 text-sm">
-                  Share the link — participants sign up and the draw updates live
-                </p>
-              </div>
-            )}
+            <DrawTabs singlesDraw={singlesDraw} doublesDraw={doublesDraw} />
           </div>
         </div>
       </main>
-      <TournamentAssistant participants={tournamentParticipants} draw={draw} />
+      <TournamentAssistant
+        participants={tournamentParticipants}
+        singlesDraw={singlesDraw}
+        doublesDraw={doublesDraw}
+      />
     </div>
   )
 }

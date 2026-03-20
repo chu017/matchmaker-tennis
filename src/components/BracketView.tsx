@@ -2,9 +2,10 @@ import { TournamentDraw, getRoundName } from '../lib/tournament'
 
 interface BracketViewProps {
   draw: TournamentDraw
+  showTitle?: boolean
 }
 
-export function BracketView({ draw }: BracketViewProps) {
+export function BracketView({ draw, showTitle = true }: BracketViewProps) {
   const matchesByRound = draw.matches.reduce<Record<number, typeof draw.matches>>(
     (acc, match) => {
       if (!acc[match.round]) acc[match.round] = []
@@ -19,11 +20,12 @@ export function BracketView({ draw }: BracketViewProps) {
     .sort((a, b) => a - b)
 
   return (
-    <div className="rounded-xl border border-court-line/20 bg-court-green/30 p-6 overflow-x-auto">
-      <h2 className="font-display text-xl tracking-wider text-court-line mb-6">
-        TOURNAMENT DRAW
-      </h2>
-
+    <div className={showTitle ? 'rounded-xl border border-court-line/20 bg-court-green/30 p-6 overflow-x-auto' : ''}>
+      {showTitle && (
+        <h2 className="font-display text-xl tracking-wider text-court-line mb-6">
+          TOURNAMENT DRAW
+        </h2>
+      )}
       <div className="flex gap-8 min-w-max pb-4">
         {roundNumbers.map((round) => (
           <div key={round} className="flex flex-col">

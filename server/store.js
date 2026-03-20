@@ -31,7 +31,7 @@ export function addParticipant(participant) {
   const entry = {
     id,
     name: participant.name.trim(),
-    rating: participant.rating ?? 1500,
+    rating: participant.rating ?? 3.0,
     type: participant.type || 'singles',
     partnerName: participant.partnerName?.trim() || null,
     createdAt: new Date().toISOString(),

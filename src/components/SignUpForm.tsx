@@ -31,7 +31,7 @@ export function SignUpForm() {
     try {
       await addParticipant({
         name: n,
-        rating: rating ? parseInt(rating, 10) : 1500,
+        rating: rating ? parseFloat(rating) : 3.0,
         type,
         partnerName: type === 'doubles' ? partnerName.trim() : undefined,
       })
@@ -59,21 +59,22 @@ export function SignUpForm() {
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Your name"
+          placeholder="Player name"
           required
           className="w-full px-4 py-2.5 rounded-lg bg-black/30 border border-court-line/20 text-court-line placeholder-court-line/50 focus:outline-none focus:ring-2 focus:ring-court-accent/50"
         />
         <input
-          type="number"
-          min="0"
-          max="3000"
-          value={rating}
+            type="number"
+            min="0"
+            max="7"
+            step="0.1"
+            value={rating}
           onChange={(e) => setRating(e.target.value)}
-          placeholder="Rating (Elo, default 1500)"
+          placeholder="Self rating (default 3.0)"
           className="w-full px-4 py-2.5 rounded-lg bg-black/30 border border-court-line/20 text-court-line placeholder-court-line/50 focus:outline-none focus:ring-2 focus:ring-court-accent/50"
         />
         <div>
-          <label className="block text-court-line/70 text-sm mb-2">Format</label>
+          <label className="block text-court-line/70 text-sm mb-2">Game type</label>
           <div className="flex gap-4">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
