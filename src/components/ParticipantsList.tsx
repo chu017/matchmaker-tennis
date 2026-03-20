@@ -1,14 +1,15 @@
 import { useState } from 'react'
 import { getDisplayNameWithRatings, type StoredParticipant } from '../lib/participantsApi'
 
-interface ParticipantsListProps {
-  participants: StoredParticipant[]
-}
-
 type Tab = 'singles' | 'doubles'
 
-export function ParticipantsList({ participants }: ParticipantsListProps) {
-  const [tab, setTab] = useState<Tab>('singles')
+interface ParticipantsListProps {
+  participants: StoredParticipant[]
+  tab: Tab
+  onTabChange: (tab: Tab) => void
+}
+
+export function ParticipantsList({ participants, tab, onTabChange }: ParticipantsListProps) {
   const singles = [...participants.filter((p) => p.type === 'singles')].sort((a, b) => b.rating - a.rating)
   const getPairRating = (p: StoredParticipant) =>
     p.type === 'doubles' && p.partnerRating != null ? (p.rating + p.partnerRating) / 2 : p.rating
@@ -22,7 +23,7 @@ export function ParticipantsList({ participants }: ParticipantsListProps) {
       </h2>
       <div className="flex gap-2 mb-4 flex-wrap">
         <button
-          onClick={() => setTab('singles')}
+          onClick={() => onTabChange('singles')}
           className={`min-h-[44px] px-4 py-2.5 rounded-full text-sm font-medium transition-colors touch-manipulation ${
             tab === 'singles'
               ? 'bg-pink-primary text-white'
@@ -32,7 +33,7 @@ export function ParticipantsList({ participants }: ParticipantsListProps) {
           Singles ({singles.length})
         </button>
         <button
-          onClick={() => setTab('doubles')}
+          onClick={() => onTabChange('doubles')}
           className={`min-h-[44px] px-4 py-2.5 rounded-full text-sm font-medium transition-colors touch-manipulation ${
             tab === 'doubles'
               ? 'bg-pink-primary text-white'

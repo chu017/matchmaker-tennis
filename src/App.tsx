@@ -12,11 +12,14 @@ import { checkApiHealth } from './lib/minimaxApi'
 
 const POLL_INTERVAL_MS = 3000
 
+type GameTab = 'singles' | 'doubles'
+
 function App() {
   const [participants, setParticipants] = useState<StoredParticipant[]>([])
   const [apiReady, setApiReady] = useState<boolean | null>(null)
   const [singlesDraw, setSinglesDraw] = useState<TournamentDraw | null>(null)
   const [doublesDraw, setDoublesDraw] = useState<TournamentDraw | null>(null)
+  const [gameTab, setGameTab] = useState<GameTab>('singles')
 
   const loadData = useCallback(async () => {
     try {
@@ -110,12 +113,12 @@ function App() {
 
       <main className="max-w-7xl mx-auto px-4 py-6 sm:py-8 sm:px-6 pb-[max(6rem,env(safe-area-inset-bottom))]">
         <div className="grid lg:grid-cols-3 gap-6 sm:gap-8">
-          <div className="lg:col-span-1 space-y-6 order-2 lg:order-1">
+          <div className="lg:col-span-1 space-y-6 order-1">
             <SignUpForm />
-            <ParticipantsList participants={participants} />
+            <ParticipantsList participants={participants} tab={gameTab} onTabChange={setGameTab} />
           </div>
-          <div className="lg:col-span-2 order-1 lg:order-2">
-            <DrawTabs singlesDraw={singlesDraw} doublesDraw={doublesDraw} />
+          <div className="lg:col-span-2 order-2">
+            <DrawTabs singlesDraw={singlesDraw} doublesDraw={doublesDraw} tab={gameTab} onTabChange={setGameTab} />
           </div>
         </div>
       </main>

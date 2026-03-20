@@ -1,16 +1,16 @@
-import { useState } from 'react'
 import { TournamentDraw } from '../lib/tournament'
 import { BracketView } from './BracketView'
+
+type Tab = 'singles' | 'doubles'
 
 interface DrawTabsProps {
   singlesDraw: TournamentDraw | null
   doublesDraw: TournamentDraw | null
+  tab: Tab
+  onTabChange: (tab: Tab) => void
 }
 
-type Tab = 'singles' | 'doubles'
-
-export function DrawTabs({ singlesDraw, doublesDraw }: DrawTabsProps) {
-  const [tab, setTab] = useState<Tab>('singles')
+export function DrawTabs({ singlesDraw, doublesDraw, tab, onTabChange }: DrawTabsProps) {
   const draw = tab === 'singles' ? singlesDraw : doublesDraw
 
   return (
@@ -21,7 +21,7 @@ export function DrawTabs({ singlesDraw, doublesDraw }: DrawTabsProps) {
         </h2>
         <div className="flex gap-2 flex-wrap">
           <button
-            onClick={() => setTab('singles')}
+            onClick={() => onTabChange('singles')}
             className={`min-h-[44px] px-4 py-2.5 rounded-full text-sm font-medium transition-colors touch-manipulation ${
               tab === 'singles'
                 ? 'bg-pink-primary text-white'
@@ -31,7 +31,7 @@ export function DrawTabs({ singlesDraw, doublesDraw }: DrawTabsProps) {
             Singles ({singlesDraw?.participants.length ?? 0})
           </button>
           <button
-            onClick={() => setTab('doubles')}
+            onClick={() => onTabChange('doubles')}
             className={`min-h-[44px] px-4 py-2.5 rounded-full text-sm font-medium transition-colors touch-manipulation ${
               tab === 'doubles'
                 ? 'bg-pink-primary text-white'
