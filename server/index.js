@@ -7,7 +7,7 @@ import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { getParticipants, addParticipant, deleteParticipant, getMatchResults, setMatchResult, clearMatchResult } from './store.js';
+import { getParticipants, addParticipant, deleteParticipant, getMatchResults, setMatchResult, clearMatchResult, clearMatchResults } from './store.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -117,7 +117,7 @@ app.get('/api/participants', (_, res) => {
 
 app.post('/api/participants', (req, res) => {
   try {
-    const { name, rating, type, partnerName } = req.body;
+    const { name, rating, type, partnerName, partnerRating } = req.body;
     if (!name || typeof name !== 'string' || !name.trim()) {
       return res.status(400).json({ error: 'name is required' });
     }
@@ -126,6 +126,7 @@ app.post('/api/participants', (req, res) => {
       rating: rating != null ? Number(rating) : 3.0,
       type: type === 'doubles' ? 'doubles' : 'singles',
       partnerName: type === 'doubles' && partnerName ? String(partnerName).trim() : null,
+      partnerRating: type === 'doubles' && partnerRating != null ? Number(partnerRating) : null,
     });
     res.status(201).json(participant);
   } catch (err) {
@@ -184,18 +185,25 @@ app.post('/api/admin/match-result', requireAdmin, (req, res) => {
   }
 });
 
-// Admin: clear match result (query params for DELETE compatibility)
+// Admin: clear match result (matchIds=cascade clears downstream too)
 app.delete('/api/admin/match-result', requireAdmin, (req, res) => {
   try {
-    const matchId = req.query.matchId || req.body?.matchId;
-    const type = req.query.type || req.body?.type;
-    if (!matchId || !type) {
-      return res.status(400).json({ error: 'matchId and type (singles|doubles) required as query params' });
+    const matchIdsParam = req.query.matchIds;
+    const matchId = req.query.matchId;
+    const type = req.query.type;
+    if (!type) {
+      return res.status(400).json({ error: 'type (singles|doubles) required' });
     }
     if (type !== 'singles' && type !== 'doubles') {
       return res.status(400).json({ error: 'type must be singles or doubles' });
     }
-    clearMatchResult(type, matchId);
+    const ids = matchIdsParam
+      ? matchIdsParam.split(',').map((s) => s.trim()).filter(Boolean)
+      : (matchId ? [matchId] : []);
+    if (ids.length === 0) {
+      return res.status(400).json({ error: 'matchId or matchIds required' });
+    }
+    clearMatchResults(type, ids);
     res.json(getMatchResults());
   } catch (err) {
     res.status(500).json({ error: err.message });

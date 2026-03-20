@@ -85,16 +85,11 @@ function MatchCard({
           {match.score && (
             <span className="text-pink-accent text-xs font-semibold">{match.score}</span>
           )}
-          {winProb != null && !isBye && !match.score && (
-            <span className="text-pink-primary text-xs font-semibold" title="P(player1 wins)">
-              {(winProb * 100).toFixed(0)}%
-            </span>
-          )}
         </span>
       </div>
       <div className="divide-y divide-pink-soft">
         <div
-          className={`px-3 py-2 text-sm font-medium ${
+          className={`px-3 py-2 text-sm font-medium flex justify-between items-center gap-2 ${
             match.winner?.id === match.player1?.id
               ? 'text-pink-primary bg-pink-soft font-semibold'
               : predWinner?.id === match.player1?.id
@@ -102,12 +97,19 @@ function MatchCard({
                 : 'text-pink-text'
           }`}
         >
-          {p1}
-          {match.winner?.id === match.player1?.id && <span className="ml-1 text-xs">✓</span>}
-          {match.player1?.seed && <span className="text-pink-accent ml-1">#{match.player1.seed}</span>}
+          <span>
+            {p1}
+            {match.winner?.id === match.player1?.id && <span className="ml-1 text-xs">✓</span>}
+            {match.player1?.seed && <span className="text-pink-accent ml-1">#{match.player1.seed}</span>}
+          </span>
+          {winProb != null && !isBye && !match.score && (
+            <span className="text-pink-primary text-xs font-semibold shrink-0">
+              {(winProb * 100).toFixed(0)}%
+            </span>
+          )}
         </div>
         <div
-          className={`px-3 py-2 text-sm font-medium ${
+          className={`px-3 py-2 text-sm font-medium flex justify-between items-center gap-2 ${
             match.winner?.id === match.player2?.id
               ? 'text-pink-primary bg-pink-soft font-semibold'
               : predWinner?.id === match.player2?.id
@@ -115,9 +117,16 @@ function MatchCard({
                 : 'text-pink-text'
           }`}
         >
-          {p2}
-          {match.winner?.id === match.player2?.id && <span className="ml-1 text-xs">✓</span>}
-          {match.player2?.seed && <span className="text-pink-accent ml-1">#{match.player2.seed}</span>}
+          <span>
+            {p2}
+            {match.winner?.id === match.player2?.id && <span className="ml-1 text-xs">✓</span>}
+            {match.player2?.seed && <span className="text-pink-accent ml-1">#{match.player2.seed}</span>}
+          </span>
+          {winProb != null && !isBye && !match.score && (
+            <span className="text-pink-primary text-xs font-semibold shrink-0">
+              {((1 - winProb) * 100).toFixed(0)}%
+            </span>
+          )}
         </div>
       </div>
     </div>

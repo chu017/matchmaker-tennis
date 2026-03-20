@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { fetchParticipants, fetchMatchResults, type StoredParticipant, type MatchResults } from '../lib/participantsApi'
 import { toTournamentParticipants } from '../lib/participantUtils'
-import { generateDraw, applyMatchResults, getRoundName, type TournamentDraw } from '../lib/tournament'
+import { generateDraw, applyMatchResults, getRoundName, getDownstreamMatchIds, type TournamentDraw } from '../lib/tournament'
 import { applyPredictionsToDraw } from '../lib/minimax'
 import { verifyAdminKey, deleteParticipant, setMatchResult, clearMatchResult } from '../lib/adminApi'
-import { getDisplayName } from '../lib/participantsApi'
+import { getDisplayName, getDisplayNameWithRatings } from '../lib/participantsApi'
 
 const ADMIN_KEY_STORAGE = 'sf-tennis-admin-key'
 
@@ -20,17 +20,49 @@ interface MatchResultRowProps {
   saved?: boolean
 }
 
+/** Parse "6-4, 6-3" or "6-4, 6-7(3), 10-8" into set pairs */
+function parseScore(s: string): [number, number][] {
+  const sets: [number, number][] = []
+  const re = /(\d+)-(\d+)/g
+  let m
+  while ((m = re.exec(s))) {
+    sets.push([+m[1], +m[2]])
+  }
+  return sets
+}
+
+/** Format sets to "6-4, 6-3" */
+function formatScore(sets: [number, number][]): string {
+  return sets
+    .filter(([a, b]) => a > 0 || b > 0)
+    .map(([a, b]) => `${a}-${b}`)
+    .join(', ')
+}
+
 function MatchResultRow({ match, p1, p2, winnerId, score, onSetResult, onClear, saving, saved }: MatchResultRowProps) {
   const [localWinner, setLocalWinner] = useState(winnerId)
-  const [localScore, setLocalScore] = useState(score)
+  const [localSets, setLocalSets] = useState<[number, number][]>(() => parseScore(score).length ? parseScore(score) : [[0, 0], [0, 0], [0, 0]])
 
   useEffect(() => {
     setLocalWinner(winnerId)
-    setLocalScore(score)
+    const parsed = parseScore(score)
+    setLocalSets(parsed.length ? parsed : [[0, 0], [0, 0], [0, 0]])
   }, [winnerId, score])
 
+  const handleSetChange = (setIdx: number, slot: 0 | 1, val: string) => {
+    const n = val === '' ? 0 : Math.min(99, Math.max(0, parseInt(val, 10) || 0))
+    setLocalSets((prev) => {
+      const next = prev.map((s) => [s[0], s[1]] as [number, number])
+      while (next.length <= setIdx) next.push([0, 0])
+      const [a, b] = next[setIdx]
+      next[setIdx] = slot === 0 ? [n, b] : [a, n]
+      return next
+    })
+  }
+
   const handleSave = () => {
-    if (localWinner) onSetResult(match.id, localWinner, localScore.trim() || undefined)
+    const scoreStr = formatScore(localSets)
+    if (localWinner) onSetResult(match.id, localWinner, scoreStr || undefined)
   }
 
   return (
@@ -50,14 +82,32 @@ function MatchResultRow({ match, p1, p2, winnerId, score, onSetResult, onClear, 
             <option value={p1.id}>{p1.name}</option>
             <option value={p2.id}>{p2.name}</option>
           </select>
-          <input
-            type="text"
-            value={localScore}
-            onChange={(e) => setLocalScore(e.target.value)}
-            placeholder="e.g. 6-4, 6-3 or 6-4, 6-7(3), 10-8"
-            title="3盘2胜：头两盘正常盘，第三盘抢七"
-            className="min-h-[36px] w-36 px-3 rounded-lg bg-white border border-pink-soft text-pink-text text-sm placeholder-pink-text-muted"
-          />
+          <div className="flex items-center gap-1.5" title="Set 1, Set 2, Set 3 (optional)">
+            {[0, 1, 2].map((i) => (
+              <span key={i} className="flex items-center gap-0.5">
+                <input
+                  type="number"
+                  min={0}
+                  max={99}
+                  placeholder="—"
+                  value={localSets[i]?.[0] || ''}
+                  onChange={(e) => handleSetChange(i, 0, e.target.value)}
+                  className="w-10 h-8 text-center rounded bg-white border border-pink-soft text-pink-text text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+                <span className="text-pink-text-muted text-xs">-</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={99}
+                  placeholder="—"
+                  value={localSets[i]?.[1] || ''}
+                  onChange={(e) => handleSetChange(i, 1, e.target.value)}
+                  className="w-10 h-8 text-center rounded bg-white border border-pink-soft text-pink-text text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+                {i < 2 && <span className="text-pink-text-muted text-xs ml-0.5">,</span>}
+              </span>
+            ))}
+          </div>
           <button
             onClick={handleSave}
             disabled={!localWinner || saving}
@@ -106,16 +156,16 @@ export function AdminPage({ onBack }: AdminPageProps) {
 
       if (singles.length >= 2) {
         const sp = toTournamentParticipants(singles)
-        let draw = applyPredictionsToDraw(generateDraw(sp))
-        draw = applyMatchResults(draw, results.singles)
+        let draw = applyMatchResults(generateDraw(sp), results.singles)
+        draw = applyPredictionsToDraw(draw)
         setSinglesDraw(draw)
       } else {
         setSinglesDraw(null)
       }
       if (doubles.length >= 2) {
         const dp = toTournamentParticipants(doubles)
-        let draw = applyPredictionsToDraw(generateDraw(dp))
-        draw = applyMatchResults(draw, results.doubles)
+        let draw = applyMatchResults(generateDraw(dp), results.doubles)
+        draw = applyPredictionsToDraw(draw)
         setDoublesDraw(draw)
       } else {
         setDoublesDraw(null)
@@ -187,8 +237,10 @@ export function AdminPage({ onBack }: AdminPageProps) {
   const handleClearWinner = async (matchId: string) => {
     if (!verified || !adminKey) return
     setError(null)
+    const draw = tab === 'singles' ? singlesDraw : doublesDraw
+    const ids = draw ? [matchId, ...getDownstreamMatchIds(matchId, draw)] : [matchId]
     try {
-      const results = await clearMatchResult(matchId, tab, adminKey)
+      const results = await clearMatchResult(ids, tab, adminKey)
       setMatchResults(results)
       await loadData()
     } catch (err) {
@@ -228,7 +280,7 @@ export function AdminPage({ onBack }: AdminPageProps) {
 
   const draw = tab === 'singles' ? singlesDraw : doublesDraw
   const results = tab === 'singles' ? matchResults.singles : matchResults.doubles
-  const list = tab === 'singles' ? participants.filter((p) => p.type === 'singles') : participants.filter((p) => p.type === 'doubles')
+  const list = [...(tab === 'singles' ? participants.filter((p) => p.type === 'singles') : participants.filter((p) => p.type === 'doubles'))].sort((a, b) => b.rating - a.rating)
 
   const getResult = (matchId: string): { winnerId: string; score: string } => {
     const val = results[matchId]
@@ -295,9 +347,12 @@ export function AdminPage({ onBack }: AdminPageProps) {
             {list.length === 0 ? (
               <li className="text-pink-text-muted text-sm py-2">No {tab} participants</li>
             ) : (
-              list.map((p) => (
+              list.map((p, i) => (
                 <li key={p.id} className="flex items-center justify-between py-2">
-                  <span className="text-pink-text">{getDisplayName(p)}</span>
+                  <span className="text-pink-text">
+                    {getDisplayNameWithRatings(p)}
+                    <span className="text-pink-accent ml-2 text-xs font-semibold">#{i + 1}</span>
+                  </span>
                   <button
                     onClick={() => handleDelete(p.id)}
                     className="min-h-[36px] px-3 rounded-lg bg-red-100 text-red-600 text-sm font-medium hover:bg-red-200"
@@ -313,7 +368,6 @@ export function AdminPage({ onBack }: AdminPageProps) {
         <section className="rounded-3xl bg-white shadow-card p-4 sm:p-6 border border-pink-soft/50">
           <div className="mb-4">
             <h2 className="font-display text-lg text-pink-text">Match results</h2>
-            <p className="text-pink-text-muted text-xs mt-1">3盘2胜：头两盘正常盘，第三盘抢七</p>
           </div>
           {!draw ? (
             <p className="text-pink-text-muted text-sm">At least 2 {tab} participants needed for the draw</p>

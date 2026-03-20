@@ -8,6 +8,7 @@ export interface StoredParticipant {
   rating: number
   type: 'singles' | 'doubles'
   partnerName?: string | null
+  partnerRating?: number | null
   createdAt?: string
 }
 
@@ -56,14 +57,15 @@ export async function setMatchResult(
 }
 
 export async function clearMatchResult(
-  matchId: string,
+  matchIds: string | string[],
   type: 'singles' | 'doubles',
   adminKey: string
 ): Promise<{ singles: Record<string, string>; doubles: Record<string, string> }> {
-  const res = await fetch(`/api/admin/match-result?matchId=${encodeURIComponent(matchId)}&type=${encodeURIComponent(type)}`, {
-    method: 'DELETE',
-    headers: adminHeaders(adminKey),
-  })
+  const ids = Array.isArray(matchIds) ? matchIds : [matchIds]
+  const res = await fetch(
+    `/api/admin/match-result?matchIds=${encodeURIComponent(ids.join(','))}&type=${encodeURIComponent(type)}`,
+    { method: 'DELETE', headers: adminHeaders(adminKey) }
+  )
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
     throw new Error((err as { error?: string }).error || res.statusText)

@@ -42,8 +42,8 @@ function nextPowerOf2(n: number): number {
 }
 
 /**
- * Standard tennis seeding: 1 vs 16, 2 vs 15, 3 vs 14, etc.
- * For smaller draws, seeds are distributed to avoid early meetings.
+ * Seed bracket with balanced first round: pair adjacent seeds (1 vs 2, 3 vs 4, ...)
+ * so each first-round match has ~50-50 win probability.
  */
 function seedBracket(participants: Participant[], bracketSize: number): (Participant | null)[] {
   const slots: (Participant | null)[] = new Array(bracketSize).fill(null);
@@ -55,9 +55,8 @@ function seedBracket(participants: Participant[], bracketSize: number): (Partici
     return seedA - seedB;
   });
 
-  // Standard bracket seeding pattern for power-of-2
-  // Round 1 matchups: (1,16), (8,9), (4,13), (5,12), (2,15), (7,10), (3,14), (6,11)
-  const seedOrder = getSeedOrder(bracketSize);
+  // Balanced first round: (1,2), (3,4), (5,6), ... for ~50-50 matchups
+  const seedOrder = getSeedOrderBalanced(bracketSize);
 
   let playerIdx = 0;
   for (const slot of seedOrder) {
@@ -84,6 +83,21 @@ function getSeedOrder(size: number): number[] {
   for (let i = 0; i < half; i++) {
     result.push(top[i]);
     result.push(bottom[i] + half);
+  }
+  return result;
+}
+
+/**
+ * Get slot order for balanced first round: pair adjacent seeds (1 vs 2, 3 vs 4, ...)
+ * so each first-round match has ~50-50 win probability.
+ */
+function getSeedOrderBalanced(size: number): number[] {
+  if (size <= 2) return [0, 1];
+  const half = size / 2;
+  const result: number[] = [];
+  for (let i = 0; i < half; i++) {
+    result.push(i);
+    result.push(i + half);
   }
   return result;
 }
@@ -194,6 +208,7 @@ export function applyMatchResults(
   })
 
   // Advance winners to next round: r{N}-{i} is fed by r{N-1}-{2*i} and r{N-1}-{2*i+1}
+  // When we don't have both feeders, explicitly reset player1/player2 to avoid stale data
   for (let r = 2; r <= draw.rounds; r++) {
     const prevMatches = matches.filter((m) => m.round === r - 1)
     const currMatches = matches.filter((m) => m.round === r)
@@ -202,17 +217,41 @@ export function applyMatchResults(
       const right = prevMatches[i * 2 + 1]
       const curr = currMatches[i]
       const idx = matches.findIndex((m) => m.id === curr.id)
-      if (idx >= 0 && left?.winner && right?.winner) {
+      if (idx < 0) continue
+      if (left?.winner && right?.winner) {
         matches[idx] = {
           ...matches[idx],
           player1: left.winner,
           player2: right.winner,
+        }
+      } else {
+        matches[idx] = {
+          ...matches[idx],
+          player1: null,
+          player2: null,
         }
       }
     }
   }
 
   return { ...draw, matches }
+}
+
+/**
+ * Get match IDs that depend on this match (downstream in bracket).
+ * Clearing a match invalidates results of matches that were fed by its winner.
+ */
+export function getDownstreamMatchIds(matchId: string, draw: TournamentDraw): string[] {
+  const m = /^r(\d+)-(\d+)$/.exec(matchId);
+  if (!m) return [];
+  let round = parseInt(m[1], 10);
+  let pos = parseInt(m[2], 10);
+  const downstream: string[] = [];
+  for (let r = round + 1; r <= draw.rounds; r++) {
+    pos = Math.floor(pos / 2);
+    downstream.push(`r${r}-${pos}`);
+  }
+  return downstream;
 }
 
 /**

@@ -48,6 +48,7 @@ export function addParticipant(participant) {
     rating: participant.rating ?? 3.0,
     type: participant.type || 'singles',
     partnerName: participant.partnerName?.trim() || null,
+    partnerRating: participant.partnerRating != null ? participant.partnerRating : null,
     createdAt: new Date().toISOString(),
   };
   data.participants.push(entry);
@@ -80,6 +81,16 @@ export function clearMatchResult(type, matchId) {
   const data = readMatchResults();
   const key = type === 'doubles' ? 'doubles' : 'singles';
   delete data[key][matchId];
+  writeMatchResults(data);
+  return data;
+}
+
+export function clearMatchResults(type, matchIds) {
+  const data = readMatchResults();
+  const key = type === 'doubles' ? 'doubles' : 'singles';
+  for (const id of matchIds) {
+    delete data[key][id];
+  }
   writeMatchResults(data);
   return data;
 }

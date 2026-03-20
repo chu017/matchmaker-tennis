@@ -28,16 +28,16 @@ function App() {
 
       if (singles.length >= 2) {
         const sp = toTournamentParticipants(singles)
-        let draw = applyPredictionsToDraw(generateDraw(sp))
-        draw = applyMatchResults(draw, results.singles)
+        let draw = applyMatchResults(generateDraw(sp), results.singles)
+        draw = applyPredictionsToDraw(draw)
         setSinglesDraw(draw)
       } else {
         setSinglesDraw(null)
       }
       if (doubles.length >= 2) {
         const dp = toTournamentParticipants(doubles)
-        let draw = applyPredictionsToDraw(generateDraw(dp))
-        draw = applyMatchResults(draw, results.doubles)
+        let draw = applyMatchResults(generateDraw(dp), results.doubles)
+        draw = applyPredictionsToDraw(draw)
         setDoublesDraw(draw)
       } else {
         setDoublesDraw(null)

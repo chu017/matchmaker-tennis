@@ -6,6 +6,7 @@ export function SignUpForm() {
   const [rating, setRating] = useState('')
   const [type, setType] = useState<'singles' | 'doubles'>('singles')
   const [partnerName, setPartnerName] = useState('')
+  const [partnerRating, setPartnerRating] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -34,6 +35,7 @@ export function SignUpForm() {
         rating: rating ? parseFloat(rating) : 3.0,
         type,
         partnerName: type === 'doubles' ? partnerName.trim() : undefined,
+        partnerRating: type === 'doubles' && partnerRating ? parseFloat(partnerRating) : undefined,
       })
       setSuccess(true)
       setName('')
@@ -99,14 +101,26 @@ export function SignUpForm() {
           </div>
         </div>
         {type === 'doubles' && (
-          <input
-            type="text"
-            value={partnerName}
-            onChange={(e) => setPartnerName(e.target.value)}
-            placeholder="Partner's name"
-            required={type === 'doubles'}
-            className="w-full min-h-[44px] px-4 py-3 rounded-xl bg-pink-soft/60 border-0 text-pink-text placeholder-pink-text-muted focus:outline-none focus:ring-2 focus:ring-pink-primary/40 touch-manipulation"
-          />
+          <>
+            <input
+              type="text"
+              value={partnerName}
+              onChange={(e) => setPartnerName(e.target.value)}
+              placeholder="Partner's name"
+              required={type === 'doubles'}
+              className="w-full min-h-[44px] px-4 py-3 rounded-xl bg-pink-soft/60 border-0 text-pink-text placeholder-pink-text-muted focus:outline-none focus:ring-2 focus:ring-pink-primary/40 touch-manipulation"
+            />
+            <input
+              type="number"
+              min="0"
+              max="7"
+              step="0.1"
+              value={partnerRating}
+              onChange={(e) => setPartnerRating(e.target.value)}
+              placeholder="Partner's rating (default 3.0)"
+              className="w-full min-h-[44px] px-4 py-3 rounded-xl bg-pink-soft/60 border-0 text-pink-text placeholder-pink-text-muted focus:outline-none focus:ring-2 focus:ring-pink-primary/40 touch-manipulation"
+            />
+          </>
         )}
         <button
           type="submit"
