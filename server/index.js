@@ -4,8 +4,12 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 import { getParticipants, addParticipant } from './store.js';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3001;
 const MINIMAX_API_KEY = process.env.MINIMAX_API_KEY;
@@ -119,6 +123,15 @@ app.post('/api/participants', (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Serve static frontend in production (after build)
+const distPath = path.join(__dirname, '..', 'dist');
+if (fs.existsSync(path.join(distPath, 'index.html'))) {
+    app.use(express.static(distPath));
+  app.get('*', (_, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+}
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

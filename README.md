@@ -31,6 +31,10 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 **Note:** `npm run dev` starts both the Vite frontend and the API server. Participant data is stored in `server/participants.json`.
 
+## Deploy (free hosting)
+
+See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for deploying to **Render** (recommended) or **GitHub Pages**.
+
 ## Build
 
 ```bash

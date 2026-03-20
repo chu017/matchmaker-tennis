@@ -1,0 +1,14 @@
+# Render Blueprint - https://render.com
+# Connect your GitHub repo and Render will use this config
+
+services:
+  - type: web
+    name: matchmaker-tennis
+    runtime: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MINIMAX_API_KEY
+        sync: false  # Add manually in Render dashboard
