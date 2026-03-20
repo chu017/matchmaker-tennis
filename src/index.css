@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --court-green: #1e3a0f;
+  --court-line: #f5f5dc;
+  --accent-gold: #d4af37;
+}
+
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: linear-gradient(135deg, #0f1a0a 0%, #1a2f0d 50%, #0f1a0a 100%);
+  min-height: 100vh;
+  color: #e8e8e8;
+}
