@@ -16,10 +16,26 @@ html {
 
 body {
   font-family: 'DM Sans', system-ui, sans-serif;
-  background: linear-gradient(135deg, #0f1a0a 0%, #1a2f0d 50%, #0f1a0a 100%);
+  background: 
+    radial-gradient(ellipse 100% 80% at 50% 0%, rgba(252, 228, 236, 0.95) 0%, transparent 60%),
+    radial-gradient(circle at 20% 80%, rgba(248, 187, 208, 0.35) 0%, transparent 40%),
+    radial-gradient(circle at 80% 20%, rgba(249, 192, 212, 0.3) 0%, transparent 40%),
+    linear-gradient(180deg, #fce7f3 0%, #fce4ec 50%, #fce7f3 100%);
+  background-attachment: fixed;
   min-height: 100vh;
-  color: #e8e8e8;
+  color: #1a1a1a;
   padding-bottom: var(--safe-area-bottom);
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
+  background-size: 24px 24px;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
 }
 
 /* Prevent iOS zoom on input focus (font-size < 16px triggers zoom) */

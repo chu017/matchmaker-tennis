@@ -95,7 +95,7 @@ ${buildContext()}`
     <>
       <button
         onClick={() => setOpen(true)}
-        className="fixed right-4 sm:right-6 w-14 h-14 rounded-full bg-court-accent text-court-green font-bold shadow-lg hover:scale-105 active:scale-95 transition-transform flex items-center justify-center touch-manipulation z-40"
+        className="fixed right-4 sm:right-6 w-14 h-14 rounded-full bg-pink-primary text-white font-bold shadow-lg hover:scale-105 active:scale-95 transition-transform flex items-center justify-center touch-manipulation z-40"
         style={{ bottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
         title="Tournament Assistant"
       >
@@ -104,22 +104,22 @@ ${buildContext()}`
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-end justify-end p-0 sm:p-4 sm:p-6">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setOpen(false)} />
-          <div className="relative w-full max-w-md h-[85vh] sm:h-[70vh] max-h-[500px] rounded-t-xl sm:rounded-xl border border-court-line/20 bg-court-green/95 backdrop-blur flex flex-col shadow-xl">
-            <div className="flex items-center justify-between p-4 border-b border-court-line/20">
-              <h3 className="font-display text-lg tracking-wider text-court-line">
+          <div className="absolute inset-0 bg-black/20" onClick={() => setOpen(false)} />
+          <div className="relative w-full max-w-md h-[85vh] sm:h-[70vh] max-h-[500px] rounded-t-2xl sm:rounded-2xl border border-pink-soft bg-white flex flex-col shadow-xl">
+            <div className="flex items-center justify-between p-4 border-b border-pink-soft">
+              <h3 className="font-display text-lg tracking-wider text-pink-text">
                 TOURNAMENT ASSISTANT
               </h3>
               <button
                 onClick={() => setOpen(false)}
-                className="min-w-[44px] min-h-[44px] -mr-2 flex items-center justify-center text-court-line/70 hover:text-court-line touch-manipulation"
+                className="min-w-[44px] min-h-[44px] -mr-2 flex items-center justify-center text-pink-text-muted hover:text-pink-text touch-manipulation"
               >
                 ✕
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-pink-soft/20">
               {messages.length === 0 && (
-                <p className="text-court-line/60 text-sm">
+                <p className="text-pink-text-muted text-sm">
                   Ask about the draw, matchups, scheduling, or participants. Try: &quot;Who plays in the first round?&quot; or &quot;Summarize the bracket.&quot;
                 </p>
               )}
@@ -129,10 +129,10 @@ ${buildContext()}`
                   className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[85%] rounded-lg px-4 py-2 ${
+                    className={`max-w-[85%] rounded-xl px-4 py-2 ${
                       m.role === 'user'
-                        ? 'bg-court-accent text-court-green'
-                        : 'bg-black/30 text-court-line border border-court-line/20'
+                        ? 'bg-pink-primary text-white'
+                        : 'bg-white border border-pink-soft text-pink-text shadow-sm'
                     }`}
                   >
                     <p className="text-sm whitespace-pre-wrap">{m.content}</p>
@@ -141,14 +141,14 @@ ${buildContext()}`
               ))}
               {loading && (
                 <div className="flex justify-start">
-                  <div className="bg-black/30 rounded-lg px-4 py-2 text-court-line/60 text-sm">
+                  <div className="bg-white rounded-xl px-4 py-2 border border-pink-soft text-pink-text-muted text-sm">
                     Thinking...
                   </div>
                 </div>
               )}
               <div ref={messagesEndRef} />
             </div>
-            <div className="p-4 border-t border-court-line/20 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <div className="p-4 border-t border-pink-soft bg-white pb-[max(1rem,env(safe-area-inset-bottom))]">
               <form
                 onSubmit={(e) => { e.preventDefault(); handleSend() }}
                 className="flex gap-2"
@@ -159,12 +159,12 @@ ${buildContext()}`
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Ask about the draw..."
                   disabled={loading}
-                  className="flex-1 min-h-[44px] px-4 py-3 rounded-lg bg-black/30 border border-court-line/20 text-court-line placeholder-court-line/50 focus:outline-none focus:ring-2 focus:ring-court-accent/50 disabled:opacity-50 touch-manipulation"
+                  className="flex-1 min-h-[44px] px-4 py-3 rounded-xl bg-pink-soft/60 border-0 text-pink-text placeholder-pink-text-muted focus:outline-none focus:ring-2 focus:ring-pink-primary/40 disabled:opacity-50 touch-manipulation"
                 />
                 <button
                   type="submit"
                   disabled={loading || !input.trim()}
-                  className="min-h-[44px] px-4 py-3 rounded-lg bg-court-accent text-court-green font-semibold hover:bg-court-accent/90 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation shrink-0"
+                  className="min-h-[44px] px-4 py-3 rounded-xl bg-pink-primary text-white font-semibold hover:bg-pink-primary/90 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation shrink-0"
                 >
                   Send
                 </button>

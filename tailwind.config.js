@@ -16,6 +16,17 @@ export default {
           line: '#ffffff',
           accent: '#f59e0b',
         },
+        pink: {
+          primary: '#FF5C97',
+          accent: '#D81B60',
+          soft: '#FFF0F6',
+          muted: '#FCE4EC',
+          text: '#1a1a1a',
+          'text-muted': '#6b6b6b',
+        },
+      },
+      boxShadow: {
+        'card': '0 2px 20px -4px rgba(255, 92, 151, 0.12), 0 4px 16px -6px rgba(0, 0, 0, 0.08)',
       },
     },
   },

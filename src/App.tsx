@@ -62,22 +62,22 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen">
-      <header className="border-b border-court-line/20 bg-court-green/40 backdrop-blur-sm sticky top-0 z-10 pt-[env(safe-area-inset-top)]">
+    <div className="min-h-screen relative z-[1]">
+      <header className="border-b border-pink-soft bg-pink-soft/80 backdrop-blur-sm sticky top-0 z-10 pt-[env(safe-area-inset-top)] shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-3 sm:py-4 sm:px-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-full bg-court-line/20 flex items-center justify-center">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-full bg-white shadow-sm flex items-center justify-center">
                 <span className="text-lg sm:text-xl">🎾</span>
               </div>
               <div className="min-w-0">
-                <h1 className="font-display text-xl sm:text-3xl tracking-wider text-court-line truncate">
+                <h1 className="font-display text-xl sm:text-3xl tracking-wider text-pink-text truncate">
                   SF TENNIS MATCHMAKER
                 </h1>
-                <p className="text-xs sm:text-sm text-court-line/70">
+                <p className="text-xs sm:text-sm text-pink-text-muted">
                   San Francisco Tournament
                   <span className="ml-2 inline-flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-green-400 animate-pulse" />
+                    <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-pink-primary animate-pulse" />
                     Live
                   </span>
                 </p>
@@ -86,12 +86,12 @@ function App() {
             <div className="flex items-center gap-2 shrink-0">
               <button
                 onClick={handleCopyLink}
-                className="min-h-[44px] px-4 py-2.5 rounded-lg bg-court-line/20 text-court-line hover:bg-court-line/30 active:bg-court-line/40 transition-colors text-sm font-medium touch-manipulation w-full sm:w-auto"
+                className="min-h-[44px] px-4 py-2.5 rounded-xl bg-white border border-pink-soft text-pink-text-muted hover:bg-pink-muted/50 active:bg-pink-muted transition-colors text-sm font-medium touch-manipulation w-full sm:w-auto shadow-sm"
               >
                 Copy link to share
               </button>
               {apiReady === false && (
-                <p className="text-amber-400/90 text-xs">Set MINIMAX_API_KEY for AI</p>
+                <p className="text-pink-accent text-xs">Set MINIMAX_API_KEY for AI</p>
               )}
             </div>
           </div>
