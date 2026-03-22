@@ -97,10 +97,10 @@ function App() {
               </div>
               <div className="min-w-0">
                 <h1 className="font-display text-xl sm:text-3xl tracking-wider text-pink-text truncate">
-                  SF TENNIS MATCHMAKER
+                  SF TENNIS OPEN
                 </h1>
                 <p className="text-xs sm:text-sm text-pink-text-muted">
-                  San Francisco Tournament
+                  by SF WeChat Tennis Group
                   <span className="ml-2 inline-flex items-center gap-1">
                     <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-pink-primary animate-pulse" />
                     Live
