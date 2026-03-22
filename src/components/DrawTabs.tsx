@@ -44,7 +44,7 @@ export function DrawTabs({ singlesDraw, doublesDraw, tab, onTabChange }: DrawTab
       </div>
 
       {draw ? (
-        <BracketView draw={draw} showTitle={false} />
+        <BracketView key={tab} draw={draw} showTitle={false} />
       ) : (
         <div className="border-2 border-dashed border-pink-muted rounded-xl bg-pink-soft/40 p-8 sm:p-12 text-center">
           <p className="text-pink-text-muted text-lg mb-2">
