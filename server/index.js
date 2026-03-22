@@ -77,43 +77,6 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-// Seeding suggestions
-app.post('/api/seeding-suggestions', async (req, res) => {
-  try {
-    const { playerDescriptions } = req.body;
-    if (!playerDescriptions || typeof playerDescriptions !== 'string') {
-      return res.status(400).json({ error: 'playerDescriptions string required' });
-    }
-
-    const systemPrompt = `You are a tennis tournament organizer. Given descriptions of players, suggest seeds (1 = strongest) and Elo ratings (1500 = average, 2400 = top pro level).
-
-Respond ONLY with a valid JSON array, no other text. Format:
-[{"name": "Player Name", "seed": 1, "rating": 2400}, ...]
-
-Rules:
-- Assign seeds 1, 2, 3... based on described skill level
-- Rating: 2400 for elite, 2200 for strong, 2000 for good, 1800 for intermediate, 1500 for unknown/average
-- Include every player mentioned in the descriptions
-- Use exact names as given`;
-
-    const content = await callMiniMax([
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: playerDescriptions },
-    ], { temperature: 0.3 });
-
-    // Extract JSON from response (handle markdown code blocks)
-    let jsonStr = content.trim();
-    const match = content.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (match) jsonStr = match[1].trim();
-    const parsed = JSON.parse(jsonStr);
-    if (!Array.isArray(parsed)) throw new Error('Expected JSON array');
-    res.json({ suggestions: parsed });
-  } catch (err) {
-    console.error('Seeding suggestions error:', err);
-    res.status(500).json({ error: err.message || 'Failed to get suggestions' });
-  }
-});
-
 app.get('/api/health', async (_, res) => {
   const store = getStoreBackend();
   const database = await getSupabaseHealth();

@@ -16,24 +16,6 @@ export async function chat(messages: { role: string; content: string }[]): Promi
   return data.content
 }
 
-export interface SeedingSuggestion {
-  name: string;
-  seed?: number;
-  rating?: number;
-}
-
-export async function getSeedingSuggestions(
-  playerDescriptions: string
-): Promise<SeedingSuggestion[]> {
-  const res = await fetch(`${API_BASE}/seeding-suggestions`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ playerDescriptions }),
-  })
-  const data = await parseApiJsonOrError<{ suggestions: SeedingSuggestion[] }>(res)
-  return data.suggestions
-}
-
 export async function checkApiHealth(): Promise<{ ok: boolean; hasKey: boolean }> {
   const res = await fetch(`${API_BASE}/health`)
   const text = await res.text()

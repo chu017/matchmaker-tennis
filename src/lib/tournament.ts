@@ -70,24 +70,6 @@ function seedBracket(participants: Participant[], bracketSize: number): (Partici
 }
 
 /**
- * Get the standard bracket slot order for proper seeding
- * Ensures top seeds don't meet until later rounds (1 vs 16, 2 vs 15, etc.)
- */
-function getSeedOrder(size: number): number[] {
-  if (size <= 2) return [0, 1];
-  const half = size / 2;
-  const top = getSeedOrder(half);
-  const bottom = getSeedOrder(half);
-  // Interleave so 1st seed goes top, 2nd goes bottom, 3rd goes top, etc.
-  const result: number[] = [];
-  for (let i = 0; i < half; i++) {
-    result.push(top[i]);
-    result.push(bottom[i] + half);
-  }
-  return result;
-}
-
-/**
  * Get slot order for balanced first round: pair adjacent seeds (1 vs 2, 3 vs 4, ...)
  * so each first-round match has ~50-50 win probability.
  */
