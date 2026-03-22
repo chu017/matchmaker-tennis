@@ -1,7 +1,15 @@
 import { useState, useEffect, useCallback } from 'react'
 import { fetchParticipants, fetchMatchResults, type StoredParticipant, type MatchResults } from '../lib/participantsApi'
 import { toTournamentParticipants } from '../lib/participantUtils'
-import { generateDraw, applyMatchResults, getRoundName, getDownstreamMatchIds, type TournamentDraw } from '../lib/tournament'
+import {
+  generateDraw,
+  applyMatchResults,
+  getRoundName,
+  getDownstreamMatchIds,
+  type TournamentDraw,
+  type Participant,
+} from '../lib/tournament'
+import { formatParticipantDrawInline } from '../lib/drawDisplay'
 import { applyPredictionsToDraw } from '../lib/minimax'
 import { verifyAdminKey, deleteParticipant, setMatchResult, clearMatchResult } from '../lib/adminApi'
 import { AdminEventPlanning } from './AdminEventPlanning'
@@ -11,8 +19,8 @@ const ADMIN_KEY_STORAGE = 'sf-tennis-admin-key'
 
 interface MatchResultRowProps {
   match: { id: string; position: number; isBye?: boolean }
-  p1: { id: string; name: string } | null
-  p2: { id: string; name: string } | null
+  p1: Participant | null
+  p2: Participant | null
   winnerId: string
   score: string
   onSetResult: (matchId: string, winnerId: string, score?: string | null) => void
@@ -69,9 +77,11 @@ function MatchResultRow({ match, p1, p2, winnerId, score, onSetResult, onClear, 
   return (
     <div className="flex flex-wrap items-center gap-2 p-3 rounded-xl bg-pink-soft/40 border border-pink-soft">
       <span className="text-sm text-pink-text-muted w-20 shrink-0">Match {match.position + 1}</span>
-      <span className="text-pink-text text-sm">
-        {p1?.name ?? 'TBD'} vs {p2?.name ?? 'TBD'}
-      </span>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-pink-text text-sm min-w-0 flex-1">
+        <span className="font-medium">{formatParticipantDrawInline(p1)}</span>
+        <span className="text-pink-text-muted shrink-0">vs</span>
+        <span className="font-medium">{formatParticipantDrawInline(p2)}</span>
+      </div>
       {!match.isBye && p1 && p2 && (
         <>
           <select

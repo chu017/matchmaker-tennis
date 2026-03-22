@@ -1,4 +1,5 @@
-import { TournamentDraw, getRoundName } from '../lib/tournament'
+import { TournamentDraw, getRoundName, type Participant } from '../lib/tournament'
+import { formatParticipantDrawInline } from '../lib/drawDisplay'
 
 interface BracketViewProps {
   draw: TournamentDraw
@@ -35,7 +36,7 @@ export function BracketView({ draw, showTitle = true }: BracketViewProps) {
               </h3>
               <div
                 className="flex flex-col justify-around gap-2"
-                style={{ minHeight: `${matchesByRound[round].length * 80}px` }}
+                style={{ minHeight: `${matchesByRound[round].length * 100}px` }}
               >
                 {matchesByRound[round].map((match) => (
                   <MatchCard key={match.id} match={match} />
@@ -59,20 +60,57 @@ export function BracketView({ draw, showTitle = true }: BracketViewProps) {
   )
 }
 
+function PlayerSlot({
+  player,
+  isWinner,
+  isPredicted,
+  winProbPercent,
+  showProb,
+}: {
+  player: Participant | null
+  isWinner: boolean
+  isPredicted: boolean
+  winProbPercent: number | null
+  showProb: boolean
+}) {
+  const label = formatParticipantDrawInline(player)
+
+  return (
+    <div
+      className={`px-3 py-2 text-sm font-medium flex justify-between items-center gap-2 ${
+        isWinner
+          ? 'text-pink-primary bg-pink-soft font-semibold'
+          : isPredicted
+            ? 'text-pink-primary bg-pink-soft/60'
+            : 'text-pink-text'
+      }`}
+    >
+      <span className="min-w-0 flex-1 leading-snug break-words">
+        {label}
+        {isWinner && <span className="ml-1 text-xs">✓</span>}
+      </span>
+      {showProb && winProbPercent != null && (
+        <span className="text-pink-primary text-xs font-semibold shrink-0">
+          {winProbPercent.toFixed(0)}%
+        </span>
+      )}
+    </div>
+  )
+}
+
 function MatchCard({
   match,
 }: {
   match: TournamentDraw['matches'][0]
 }) {
-  const p1 = match.player1?.name ?? 'TBD'
-  const p2 = match.player2?.name ?? 'TBD'
   const isBye = match.isBye
   const predWinner = match.predictedWinner
   const winProb = match.predictedWinProb
+  const showProb = winProb != null && !isBye && !match.score
 
   return (
     <div
-      className={`w-32 sm:w-44 md:w-48 shrink-0 rounded-xl overflow-hidden shadow-card ${
+      className={`w-36 sm:w-48 md:w-52 shrink-0 rounded-xl overflow-hidden shadow-card ${
         isBye ? 'border border-pink-muted bg-pink-soft/50' : 'border border-pink-soft bg-white'
       }`}
     >
@@ -88,46 +126,20 @@ function MatchCard({
         </span>
       </div>
       <div className="divide-y divide-pink-soft">
-        <div
-          className={`px-3 py-2 text-sm font-medium flex justify-between items-center gap-2 ${
-            match.winner?.id === match.player1?.id
-              ? 'text-pink-primary bg-pink-soft font-semibold'
-              : predWinner?.id === match.player1?.id
-                ? 'text-pink-primary bg-pink-soft/60'
-                : 'text-pink-text'
-          }`}
-        >
-          <span>
-            {p1}
-            {match.winner?.id === match.player1?.id && <span className="ml-1 text-xs">✓</span>}
-            {match.player1?.seed && <span className="text-pink-accent ml-1">#{match.player1.seed}</span>}
-          </span>
-          {winProb != null && !isBye && !match.score && (
-            <span className="text-pink-primary text-xs font-semibold shrink-0">
-              {(winProb * 100).toFixed(0)}%
-            </span>
-          )}
-        </div>
-        <div
-          className={`px-3 py-2 text-sm font-medium flex justify-between items-center gap-2 ${
-            match.winner?.id === match.player2?.id
-              ? 'text-pink-primary bg-pink-soft font-semibold'
-              : predWinner?.id === match.player2?.id
-                ? 'text-pink-primary bg-pink-soft/60'
-                : 'text-pink-text'
-          }`}
-        >
-          <span>
-            {p2}
-            {match.winner?.id === match.player2?.id && <span className="ml-1 text-xs">✓</span>}
-            {match.player2?.seed && <span className="text-pink-accent ml-1">#{match.player2.seed}</span>}
-          </span>
-          {winProb != null && !isBye && !match.score && (
-            <span className="text-pink-primary text-xs font-semibold shrink-0">
-              {((1 - winProb) * 100).toFixed(0)}%
-            </span>
-          )}
-        </div>
+        <PlayerSlot
+          player={match.player1}
+          isWinner={match.winner?.id === match.player1?.id}
+          isPredicted={predWinner?.id === match.player1?.id && match.winner?.id !== match.player1?.id}
+          winProbPercent={showProb ? winProb * 100 : null}
+          showProb={showProb}
+        />
+        <PlayerSlot
+          player={match.player2}
+          isWinner={match.winner?.id === match.player2?.id}
+          isPredicted={predWinner?.id === match.player2?.id && match.winner?.id !== match.player2?.id}
+          winProbPercent={showProb ? (1 - winProb) * 100 : null}
+          showProb={showProb}
+        />
       </div>
     </div>
   )
