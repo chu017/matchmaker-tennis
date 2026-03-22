@@ -492,7 +492,7 @@ export function AdminPage({ onBack }: AdminPageProps) {
                 const matches = draw.matches.filter((m) => m.round === round)
                 return (
                   <div key={round}>
-                    <h3 className="font-display text-sm text-pink-primary mb-3">{getRoundName(round)}</h3>
+                    <h3 className="font-display text-sm text-pink-primary mb-3">{getRoundName(round, draw.rounds)}</h3>
                     <div className="space-y-2">
                       {matches.map((match) => {
                         const p1 = match.player1

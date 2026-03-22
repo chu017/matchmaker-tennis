@@ -14,8 +14,11 @@
  * - The **top 4 by rating** land in **four different quarterfinal quadrants** (1/4 区).
  * - Weaker players are paired with stronger ones early (1 vs 16, 2 vs 15, … when the field is full).
  *
- * **Byes:** Bracket size is the next power of 2 (max 16). Empty slots produce byes; the way
- * seeds map to lines, higher seeds tend to receive byes when the field is not full.
+ * **Bracket depth:** If **8 or fewer** entrants, the draw uses an **8-player** bracket (3 rounds
+ * to the final). If **more than 8** (up to 16), a **16-player** bracket (4 rounds to the final).
+ *
+ * **Byes:** Empty slots produce byes; the way seeds map to lines, higher seeds tend to receive
+ * byes when the field is not full.
  */
 
 /** Hard cap for singles/doubles draw size */
@@ -30,7 +33,8 @@ export interface Participant {
 
 export interface Match {
   id: string;
-  round: number; // 1 = first round, 2 = quarter, 3 = semi, 4 = final
+  /** 1-based round index. The last round (`draw.rounds`) is the final; labels depend on depth (see {@link getRoundName}). */
+  round: number;
   position: number;
   player1: Participant | null;
   player2: Participant | null;
@@ -159,8 +163,8 @@ export function generateDraw(participants: Participant[]): TournamentDraw {
   }))
 
   const n = inDraw.length
-  const rawSize = nextPowerOf2(n)
-  const bracketSize = Math.min(MAX_DRAW_PLAYERS, rawSize)
+  const bracketSize =
+    n <= 8 ? 8 : Math.min(MAX_DRAW_PLAYERS, nextPowerOf2(n))
   const rounds = Math.log2(bracketSize)
   const seededSlots = seedBracketStandard(inDraw, bracketSize)
   const firstRoundMatches = generateFirstRoundMatches(seededSlots, 'r1')
@@ -206,6 +210,87 @@ function getScore(val: MatchResultValue | undefined): string | null | undefined 
 }
 
 /**
+ * Drop winner/score when they cannot apply to the current slotting (e.g. participant count
+ * changed and `match-results` still has r2-0 = old winner who is not in this match).
+ */
+function sanitizeMatchWinnerAgainstSlots(m: Match): Match {
+  const p1 = m.player1
+  const p2 = m.player2
+  const oneSided = !p1 || !p2
+
+  // Round 1 with one empty slot = bye; the sole entrant always advances. Restore when stored
+  // results cleared the winner (bad id) or `isBye` was lost — otherwise propagation leaves SF as TBD.
+  if (m.round === 1 && oneSided) {
+    const sole = p1 ?? p2
+    if (!sole) {
+      return { ...m, winner: undefined, score: undefined, isBye: true }
+    }
+    const wid = m.winner?.id
+    if (wid !== sole.id) {
+      return { ...m, winner: sole, score: undefined, isBye: true }
+    }
+    if (!m.isBye) return { ...m, isBye: true }
+    return m
+  }
+
+  if (!m.winner) return m
+
+  const wid = m.winner.id
+  const sole = p1 ?? p2
+
+  if (m.isBye) {
+    if (!sole) return { ...m, winner: undefined, score: undefined }
+    if (wid === sole.id) return m
+    return { ...m, winner: sole, score: undefined }
+  }
+
+  const has1 = p1 != null
+  const has2 = p2 != null
+  if (has1 && has2) {
+    if (wid === m.player1!.id || wid === m.player2!.id) return m
+    return { ...m, winner: undefined, score: undefined }
+  }
+
+  // Not a bye but missing an opponent — no completed match; ignore stale stored results
+  return { ...m, winner: undefined, score: undefined }
+}
+
+function propagateWinnersIntoSlots(matches: Match[], rounds: number): Match[] {
+  const next = [...matches]
+  for (let r = 2; r <= rounds; r++) {
+    const prevMatches = next.filter((m) => m.round === r - 1).sort((a, b) => a.position - b.position)
+    const currMatches = next.filter((m) => m.round === r).sort((a, b) => a.position - b.position)
+    for (let i = 0; i < currMatches.length; i++) {
+      const left = prevMatches[i * 2]
+      const right = prevMatches[i * 2 + 1]
+      const curr = currMatches[i]
+      const idx = next.findIndex((m) => m.id === curr.id)
+      if (idx < 0) continue
+      const p1 = left?.winner ?? null
+      const p2 = right?.winner ?? null
+      next[idx] = {
+        ...next[idx],
+        player1: p1,
+        player2: p2,
+      }
+    }
+  }
+  return next
+}
+
+function matchStateFingerprint(ms: Match[]): string {
+  return ms
+    .map((m) => [
+      m.id,
+      m.player1?.id ?? '',
+      m.player2?.id ?? '',
+      m.winner?.id ?? '',
+      m.score ?? '',
+    ].join(':'))
+    .join('|')
+}
+
+/**
  * Apply stored match results to a draw (set winners, advance to next round)
  */
 export function applyMatchResults(
@@ -214,37 +299,35 @@ export function applyMatchResults(
 ): TournamentDraw {
   const participantsById = new Map(draw.participants.map((p) => [p.id, p]))
 
-  const matches = draw.matches.map((m) => {
+  let next = draw.matches.map((m) => {
     const result = results[m.id]
+    if (result === undefined) return { ...m }
     const winnerId = getWinnerId(result)
     const score = getScore(result)
-    const winner = winnerId ? participantsById.get(winnerId) ?? null : undefined
-    return { ...m, winner: winner ?? m.winner, score }
+    if (!winnerId) {
+      return { ...m, score: score ?? m.score }
+    }
+    const p = participantsById.get(winnerId)
+    // Unknown id (e.g. deleted participant) → clear winner/score, do not keep stale m.winner
+    return {
+      ...m,
+      winner: p ?? null,
+      score: p ? score : undefined,
+    }
   })
 
-  // Advance winners into the next round. Must run even when `results` is empty so bye
-  // matches (winner set at draw time) immediately fill downstream slots.
-  // Pair each side independently: bye vs TBD → one name + TBD; both byes → both names.
-  for (let r = 2; r <= draw.rounds; r++) {
-    const prevMatches = matches.filter((m) => m.round === r - 1).sort((a, b) => a.position - b.position)
-    const currMatches = matches.filter((m) => m.round === r).sort((a, b) => a.position - b.position)
-    for (let i = 0; i < currMatches.length; i++) {
-      const left = prevMatches[i * 2]
-      const right = prevMatches[i * 2 + 1]
-      const curr = currMatches[i]
-      const idx = matches.findIndex((m) => m.id === curr.id)
-      if (idx < 0) continue
-      const p1 = left?.winner ?? null
-      const p2 = right?.winner ?? null
-      matches[idx] = {
-        ...matches[idx],
-        player1: p1,
-        player2: p2,
-      }
-    }
+  // Alternate propagate ↔ sanitize until stable (stale JSON winners after redraw must not
+  // leave impossible advancement in deep rounds).
+  let prevFp = ''
+  for (let iter = 0; iter < 12; iter++) {
+    next = propagateWinnersIntoSlots(next, draw.rounds)
+    next = next.map(sanitizeMatchWinnerAgainstSlots)
+    const fp = matchStateFingerprint(next)
+    if (fp === prevFp) break
+    prevFp = fp
   }
 
-  return { ...draw, matches }
+  return { ...draw, matches: next }
 }
 
 /**
@@ -265,15 +348,35 @@ export function getDownstreamMatchIds(matchId: string, draw: TournamentDraw): st
 }
 
 /**
- * Get round name for display
+ * Human-readable round title. Depends on **total bracket depth** so the last round is always
+ * "Final" (8-bracket / ≤8 players → 3 rounds: QF → SF → Final; 16-bracket → 4 rounds).
  */
-export function getRoundName(round: number): string {
-  const names: Record<number, string> = {
-    1: 'First Round',
-    2: 'Quarterfinals',
-    3: 'Semifinals',
-    4: 'Final',
-    5: 'Championship',
-  };
-  return names[round] ?? `Round ${round}`;
+export function getRoundName(round: number, totalRounds?: number): string {
+  const tr = totalRounds ?? 4
+
+  if (tr === 3) {
+    const names: Record<number, string> = {
+      1: 'Quarterfinals',
+      2: 'Semifinals',
+      3: 'Final',
+    }
+    return names[round] ?? `Round ${round}`
+  }
+
+  if (tr === 4) {
+    const names: Record<number, string> = {
+      1: 'First Round',
+      2: 'Quarterfinals',
+      3: 'Semifinals',
+      4: 'Final',
+    }
+    return names[round] ?? `Round ${round}`
+  }
+
+  if (tr <= 0) return `Round ${round}`
+  if (round === tr) return 'Final'
+  if (round === tr - 1) return 'Semifinals'
+  if (round === tr - 2) return 'Quarterfinals'
+  if (round === 1) return 'First Round'
+  return `Round ${round}`
 }

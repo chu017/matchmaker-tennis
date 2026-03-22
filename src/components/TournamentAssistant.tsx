@@ -26,7 +26,7 @@ function formatDraw(draw: TournamentDraw): string {
   }, {})
   return Object.keys(byRound).sort((a, b) => +a - +b).map((r) => {
     const ms = byRound[+r]
-    return `${getRoundName(+r)}: ${ms.map((m) => {
+    return `${getRoundName(+r, draw.rounds)}: ${ms.map((m) => {
       const p1 = m.player1?.name ?? 'TBD'
       const p2 = m.player2?.name ?? 'TBD'
       return `${p1} vs ${p2}`

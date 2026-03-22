@@ -150,7 +150,9 @@ export function BracketView({ draw, showTitle = true }: BracketViewProps) {
   const clampedStart = Math.min(startIdx, maxStart)
   const visibleRounds = roundNumbers.slice(clampedStart, clampedStart + viewportSize)
 
-  const roundSubtitle = visibleRounds.map((r) => getRoundName(r)).join(' · ')
+  const roundSubtitle = visibleRounds
+    .map((r) => getRoundName(r, draw.rounds))
+    .join(' · ')
 
   const positionLabel =
     roundNumbers.length <= 1
@@ -348,15 +350,33 @@ function MatchCard({
       <div className="divide-y divide-pink-soft flex flex-col shrink-0">
         <PlayerSlot
           player={match.player1}
-          isWinner={match.winner?.id === match.player1?.id}
-          isPredicted={predWinner?.id === match.player1?.id && match.winner?.id !== match.player1?.id}
+          isWinner={
+            match.winner != null &&
+            match.player1 != null &&
+            match.winner.id === match.player1.id
+          }
+          isPredicted={
+            match.player1 != null &&
+            predWinner != null &&
+            predWinner.id === match.player1.id &&
+            match.winner?.id !== match.player1.id
+          }
           winProbPercent={showProb ? winProb * 100 : null}
           showProb={showProb}
         />
         <PlayerSlot
           player={match.player2}
-          isWinner={match.winner?.id === match.player2?.id}
-          isPredicted={predWinner?.id === match.player2?.id && match.winner?.id !== match.player2?.id}
+          isWinner={
+            match.winner != null &&
+            match.player2 != null &&
+            match.winner.id === match.player2.id
+          }
+          isPredicted={
+            match.player2 != null &&
+            predWinner != null &&
+            predWinner.id === match.player2.id &&
+            match.winner?.id !== match.player2.id
+          }
           winProbPercent={showProb ? (1 - winProb) * 100 : null}
           showProb={showProb}
         />

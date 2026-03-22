@@ -231,7 +231,7 @@ export function AdminEventPlanning({
                       const bye = match.isBye ? ' (Bye)' : ''
                       return (
                         <tr key={match.id} className="border-b border-pink-soft/60 align-top">
-                          <td className="py-2 pr-2 text-pink-primary font-medium">{getRoundName(round)}</td>
+                          <td className="py-2 pr-2 text-pink-primary font-medium">{getRoundName(round, draw.rounds)}</td>
                           <td className="py-2 pr-2 text-pink-text-muted">#{match.position + 1}</td>
                           <td className="py-2 pr-2 text-pink-text">
                             {p1} vs {p2}
