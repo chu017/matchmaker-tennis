@@ -37,7 +37,13 @@ function writeMatchResults(data) {
 }
 
 export async function getParticipants() {
-  return read().participants;
+  const list = read().participants;
+  // Stable pseudo signup time for legacy rows missing createdAt (preserves file order)
+  const epoch = Date.parse('2020-01-01T00:00:00.000Z');
+  return list.map((p, i) => ({
+    ...p,
+    createdAt: p.createdAt || new Date(epoch + i * 60_000).toISOString(),
+  }));
 }
 
 export async function addParticipant(participant) {

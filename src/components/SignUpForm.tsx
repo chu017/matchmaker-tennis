@@ -17,17 +17,21 @@ const selectClassName =
 
 export function SignUpForm() {
   const [name, setName] = useState('')
-  const [rating, setRating] = useState('3.0')
+  const [rating, setRating] = useState(() => ntrpOptionValue(DEFAULT_SELF_RATING))
   const [type, setType] = useState<'singles' | 'doubles'>('singles')
   const [partnerName, setPartnerName] = useState('')
   const [partnerRating, setPartnerRating] = useState(() => ntrpOptionValue(DEFAULT_SELF_RATING))
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [successDetail, setSuccessDetail] = useState<'draw' | 'waiting' | null>(null)
 
   useEffect(() => {
     if (success) {
-      const t = setTimeout(() => setSuccess(false), 4000)
+      const t = setTimeout(() => {
+        setSuccess(false)
+        setSuccessDetail(null)
+      }, 4000)
       return () => clearTimeout(t)
     }
   }, [success])
@@ -44,13 +48,15 @@ export function SignUpForm() {
     setError(null)
     setSuccess(false)
     try {
-      await addParticipant({
+      const created = await addParticipant({
         name: n,
-        rating: parseFloat(rating) || 3.0,
+        rating: parseFloat(rating) || DEFAULT_SELF_RATING,
         type,
         partnerName: type === 'doubles' ? partnerName.trim() : undefined,
-        partnerRating: type === 'doubles' && partnerRating ? parseFloat(partnerRating) : undefined,
+        partnerRating:
+          type === 'doubles' ? parseFloat(partnerRating) || DEFAULT_SELF_RATING : undefined,
       })
+      setSuccessDetail(created.bracketStatus === 'waiting' ? 'waiting' : 'draw')
       setSuccess(true)
       setName('')
       setRating(ntrpOptionValue(DEFAULT_SELF_RATING))
@@ -75,8 +81,12 @@ export function SignUpForm() {
         <p className="font-medium text-pink-text">Draw &amp; bracket rules</p>
         <ul className="list-disc list-inside space-y-1 text-xs sm:text-sm">
           <li>
-            <strong>Max 16</strong> players in the singles bracket. If more than 16 register, only the{' '}
-            <strong>top 16 by NTRP</strong> are included in the draw.
+            <strong>First 16</strong> people to sign up (by time) are in the <strong>main draw</strong>. Everyone
+            after that is on the <strong>waiting list</strong> until a spot opens (e.g. if someone withdraws).
+          </li>
+          <li>
+            Within the main draw, <strong>bracket placement</strong> still follows <strong>NTRP</strong> (top four
+            seeds in four different quarters).
           </li>
           <li>
             <strong>Single elimination</strong> with standard tournament seeding: the{' '}
@@ -185,7 +195,13 @@ export function SignUpForm() {
         </button>
       </div>
       {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-      {success && <p className="text-pink-primary text-sm mt-2">You're in! Check the draw below.</p>}
+      {success && (
+        <p className="text-pink-primary text-sm mt-2">
+          {successDetail === 'waiting'
+            ? "You're on the waiting list. If a main-draw spot opens, you'll move up automatically."
+            : "You're in the main draw! Check the list and bracket below."}
+        </p>
+      )}
     </form>
   )
 }

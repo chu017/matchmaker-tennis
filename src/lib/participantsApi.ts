@@ -35,19 +35,25 @@ export async function fetchParticipants(): Promise<StoredParticipant[]> {
   return data.participants
 }
 
+export type SignupBracketStatus = 'draw' | 'waiting'
+
+export type StoredParticipantWithBracketStatus = StoredParticipant & {
+  bracketStatus?: SignupBracketStatus
+}
+
 export async function addParticipant(data: {
   name: string
   rating?: number
   type: 'singles' | 'doubles'
   partnerName?: string
   partnerRating?: number
-}): Promise<StoredParticipant> {
+}): Promise<StoredParticipantWithBracketStatus> {
   const res = await fetch('/api/participants', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   })
-  return parseApiJsonOrError<StoredParticipant>(res)
+  return parseApiJsonOrError<StoredParticipantWithBracketStatus>(res)
 }
 
 export interface MatchResultEntry {

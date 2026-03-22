@@ -19,6 +19,7 @@ import {
   getStoreBackend,
 } from './store.js';
 import { getSupabaseHealth } from './supabaseHealth.js';
+import { bracketStatusForParticipant } from './drawPool.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -110,7 +111,9 @@ app.post('/api/participants', async (req, res) => {
       partnerName: type === 'doubles' && partnerName ? String(partnerName).trim() : null,
       partnerRating: type === 'doubles' && partnerRating != null ? Number(partnerRating) : null,
     });
-    res.status(201).json(participant);
+    const all = await getParticipants();
+    const bracketStatus = bracketStatusForParticipant(all, participant.type, participant.id);
+    res.status(201).json({ ...participant, bracketStatus });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

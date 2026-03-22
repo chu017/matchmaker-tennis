@@ -9,6 +9,8 @@ interface TournamentAssistantProps {
   participants: Participant[]
   singlesDraw: TournamentDraw | null
   doublesDraw: TournamentDraw | null
+  /** Extra line for AI context (e.g. waiting list counts) */
+  waitingListNote?: string
 }
 
 interface Message {
@@ -32,7 +34,12 @@ function formatDraw(draw: TournamentDraw): string {
   }).join('. ')
 }
 
-export function TournamentAssistant({ participants, singlesDraw, doublesDraw }: TournamentAssistantProps) {
+export function TournamentAssistant({
+  participants,
+  singlesDraw,
+  doublesDraw,
+  waitingListNote,
+}: TournamentAssistantProps) {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
@@ -56,6 +63,9 @@ export function TournamentAssistant({ participants, singlesDraw, doublesDraw }: 
     if (DOUBLES_ENABLED && doublesDraw?.matches.length) {
       parts.push('Doubles draw: ' + formatDraw(doublesDraw))
     }
+    if (waitingListNote) {
+      parts.push(waitingListNote)
+    }
     return parts.length ? parts.join('\n') : 'No participants or draw yet.'
   }
 
@@ -71,6 +81,7 @@ export function TournamentAssistant({ participants, singlesDraw, doublesDraw }: 
     try {
       const systemContent = `You are a helpful tennis tournament assistant for SF Tennis Open. Answer questions about the draw, matchups, scheduling, and participants. Be concise and friendly.
 ${!DOUBLES_ENABLED ? '\nThis event is singles-only. Do not suggest signing up for doubles.\n' : ''}
+The main draw is the first 16 people to sign up (by signup time); later sign-ups are on a waiting list. Bracket seeds are still by NTRP within those 16.
 Current tournament state:
 ${buildContext()}`
 

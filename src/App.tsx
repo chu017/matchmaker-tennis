@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { generateDraw, TournamentDraw, applyMatchResults } from './lib/tournament'
 import { applyPredictionsToDraw } from './lib/minimax'
 import { fetchParticipants, fetchMatchResults, type StoredParticipant } from './lib/participantsApi'
 import { toTournamentParticipants } from './lib/participantUtils'
+import { splitPoolBySignupOrder } from './lib/drawPool'
 import { SignUpForm } from './components/SignUpForm'
 import { ParticipantsList } from './components/ParticipantsList'
 import { DrawTabs } from './components/DrawTabs'
@@ -31,19 +32,19 @@ function App() {
       const [data, results] = await Promise.all([fetchParticipants(), fetchMatchResults()])
       setParticipants(data)
 
-      const singles = data.filter((p) => p.type === 'singles')
-      const doubles = data.filter((p) => p.type === 'doubles')
+      const singlesInDraw = splitPoolBySignupOrder(data, 'singles').inDraw
+      const doublesInDraw = splitPoolBySignupOrder(data, 'doubles').inDraw
 
-      if (singles.length >= 2) {
-        const sp = toTournamentParticipants(singles)
+      if (singlesInDraw.length >= 2) {
+        const sp = toTournamentParticipants(singlesInDraw)
         let draw = applyMatchResults(generateDraw(sp), results.singles)
         draw = applyPredictionsToDraw(draw)
         setSinglesDraw(draw)
       } else {
         setSinglesDraw(null)
       }
-      if (doubles.length >= 2) {
-        const dp = toTournamentParticipants(doubles)
+      if (doublesInDraw.length >= 2) {
+        const dp = toTournamentParticipants(doublesInDraw)
         let draw = applyMatchResults(generateDraw(dp), results.doubles)
         draw = applyPredictionsToDraw(draw)
         setDoublesDraw(draw)
@@ -69,7 +70,20 @@ function App() {
       .catch(() => setApiReady(false))
   }, [])
 
-  const tournamentParticipants = toTournamentParticipants(participants)
+  const tournamentParticipants = useMemo(() => {
+    const s = splitPoolBySignupOrder(participants, 'singles').inDraw
+    const d = DOUBLES_ENABLED ? splitPoolBySignupOrder(participants, 'doubles').inDraw : []
+    return [...toTournamentParticipants(s), ...toTournamentParticipants(d)]
+  }, [participants])
+
+  const waitingListContext = useMemo(() => {
+    const sw = splitPoolBySignupOrder(participants, 'singles').waiting.length
+    const dw = DOUBLES_ENABLED ? splitPoolBySignupOrder(participants, 'doubles').waiting.length : 0
+    const parts: string[] = []
+    if (sw) parts.push(`${sw} singles on the waiting list (signed up after the first 16)`)
+    if (dw) parts.push(`${dw} doubles on the waiting list`)
+    return parts.length ? parts.join('. ') + '.' : ''
+  }, [participants])
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href)
@@ -154,6 +168,7 @@ function App() {
         participants={tournamentParticipants}
         singlesDraw={singlesDraw}
         doublesDraw={doublesDraw}
+        waitingListNote={waitingListContext}
       />
     </div>
   )

@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { TournamentDraw, getRoundName, type Participant, type Match } from '../lib/tournament'
 import { formatParticipantDrawInline } from '../lib/drawDisplay'
-import { useMediaQuery } from '../hooks/useMediaQuery'
 import {
   computeBracketLayout,
   buildConnectorPaths,
@@ -109,7 +108,6 @@ function RoundColumnTree({
 }
 
 export function BracketView({ draw, showTitle = true }: BracketViewProps) {
-  const isMdUp = useMediaQuery('(min-width: 768px)')
   const [startIdx, setStartIdx] = useState(0)
   const [panelEnterDir, setPanelEnterDir] = useState<'next' | 'prev'>('next')
 
@@ -133,7 +131,8 @@ export function BracketView({ draw, showTitle = true }: BracketViewProps) {
     [matchesByRound]
   )
 
-  const viewportSize = isMdUp && roundNumbers.length > 1 ? 2 : 1
+  // Two rounds side-by-side on all viewports so bracket connector lines show on mobile too
+  const viewportSize = roundNumbers.length > 1 ? 2 : 1
   const maxStart = Math.max(0, roundNumbers.length - viewportSize)
   const needsNav = roundNumbers.length > viewportSize
 
@@ -163,7 +162,6 @@ export function BracketView({ draw, showTitle = true }: BracketViewProps) {
   const leftR = visibleRounds[0]
   const rightR = visibleRounds[1]
   const showTreeWithConnectors =
-    isMdUp &&
     visibleRounds.length === 2 &&
     rightR === leftR + 1 &&
     layout.matchesByRound[leftR]?.length > 0 &&
@@ -267,7 +265,7 @@ export function BracketView({ draw, showTitle = true }: BracketViewProps) {
       )}
 
       <p className="text-pink-text-muted text-sm mt-4">
-        {draw.participants.length} in draw (max 16) • {draw.rounds} rounds • Single elimination
+        {draw.participants.length} in main draw (first 16 sign-ups) • {draw.rounds} rounds • Single elimination
         {draw.matches.some((m) => m.predictedWinner) && (
           <span className="ml-2 text-pink-primary">• Winning predictions</span>
         )}

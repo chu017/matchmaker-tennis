@@ -1,10 +1,12 @@
 /**
  * Tennis tournament draw — single elimination, SF Tennis Open rules
  *
- * **Field size:** Up to 16 players per event. If more than 16 sign up, only the top 16
- * by rating (NTRP 2.5–4.5) enter the draw.
+ * **Field size:** Up to 16 players per event in the bracket. The **first 16 to sign up**
+ * (by stored signup time) enter the draw; later sign-ups are on the **waiting list** (outside
+ * the bracket until someone withdraws and order advances).
  *
- * **Seeding:** Sort by rating descending; ties broken by existing seed (lower = stronger).
+ * **Seeding (within the 16):** After the field is fixed, bracket lines use NTRP — sort by rating
+ * descending; ties broken by seed number (lower = stronger).
  *
  * **Fair bracket:** Uses standard ITF-style single-elimination positions for 2/4/8/16 draws.
  * That spreads strength so:

@@ -11,8 +11,11 @@ function getPairRating(p: StoredParticipant): number {
   return (p.rating + p.partnerRating) / 2
 }
 
+/**
+ * Map **main-draw** entrants only (≤16, already chosen by signup order).
+ * Seeds 1…n are assigned by **NTRP** (strongest = #1) for fair bracket placement.
+ */
 export function toTournamentParticipants(stored: StoredParticipant[]): Participant[] {
-  // Sort by rating descending (doubles: average of pair)
   const sorted = [...stored].sort((a, b) => getPairRating(b) - getPairRating(a))
   return sorted.map((p, i) => ({
     id: p.id,

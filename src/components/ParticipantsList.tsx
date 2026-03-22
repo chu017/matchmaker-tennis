@@ -1,4 +1,6 @@
 import { getDisplayNameWithRatings, type StoredParticipant } from '../lib/participantsApi'
+import { splitPoolBySignupOrder, compareSignupOrder } from '../lib/drawPool'
+import { toTournamentParticipants } from '../lib/participantUtils'
 
 type Tab = 'singles' | 'doubles'
 
@@ -15,11 +17,15 @@ export function ParticipantsList({
   onTabChange,
   doublesEnabled = true,
 }: ParticipantsListProps) {
-  const singles = [...participants.filter((p) => p.type === 'singles')].sort((a, b) => b.rating - a.rating)
-  const getPairRating = (p: StoredParticipant) =>
-    p.type === 'doubles' && p.partnerRating != null ? (p.rating + p.partnerRating) / 2 : p.rating
-  const doubles = [...participants.filter((p) => p.type === 'doubles')].sort((a, b) => getPairRating(b) - getPairRating(a))
-  const list = tab === 'singles' ? singles : doubles
+  const singlesTotal = participants.filter((p) => p.type === 'singles').length
+  const doublesTotal = participants.filter((p) => p.type === 'doubles').length
+
+  const { inDraw, waiting } = splitPoolBySignupOrder(participants, tab)
+  const seedById = new Map(
+    toTournamentParticipants(inDraw).map((tp) => [tp.id, tp.seed as number]),
+  )
+
+  const inDrawChrono = [...inDraw].sort(compareSignupOrder)
 
   return (
     <div className="rounded-3xl bg-white shadow-card p-4 sm:p-6 border border-pink-soft/50">
@@ -35,7 +41,7 @@ export function ParticipantsList({
               : 'bg-pink-soft/80 text-pink-text-muted hover:bg-pink-muted/60'
           }`}
         >
-          Singles ({singles.length})
+          Singles ({singlesTotal})
         </button>
         <button
           type="button"
@@ -49,35 +55,55 @@ export function ParticipantsList({
                 : 'bg-pink-soft/80 text-pink-text-muted hover:bg-pink-muted/60'
           }`}
         >
-          Doubles ({doubles.length})
+          Doubles ({doublesTotal})
         </button>
       </div>
-      <div key={tab} className="animate-draw-tab motion-reduce:animate-none">
-        <p className="text-pink-text-muted text-sm mb-4">
-          {list.length} signed up • Live
+      <div key={tab} className="animate-draw-tab motion-reduce:animate-none space-y-5">
+        <p className="text-pink-text-muted text-sm">
+          {inDraw.length} in main draw · {waiting.length} waiting · {inDraw.length + waiting.length} total · Live
         </p>
-        <p className="text-pink-text-muted text-xs mb-4">
-          # = seed by NTRP (2.5–4.5). Draw: max 16; top 4 seeds in four different quarters; extra spots =
-          byes.
-          {doublesEnabled ? ' Doubles: pair average for seed.' : ' Singles bracket only.'}
+        <p className="text-pink-text-muted text-xs">
+          First 16 to sign up are in the bracket. Bracket seed # is by NTRP (top four seeds in different quarters).
+          {doublesEnabled ? ' Doubles: pair average for seed.' : ' Singles only.'}
         </p>
-        <ul className="space-y-2 max-h-64 overflow-y-auto divide-y divide-pink-soft">
-          {list.length === 0 ? (
-            <li className="text-pink-text-muted text-sm py-2">
-              No {tab} participants yet. Be the first to sign up!
-            </li>
-          ) : (
-            list.map((p, i) => (
-              <li key={p.id} className="flex items-center gap-2 px-3 py-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-pink-primary shrink-0" />
-                <span className="text-pink-text">
-                  {getDisplayNameWithRatings(p)}
-                  <span className="text-pink-accent ml-2 text-xs font-semibold">#{i + 1}</span>
-                </span>
-              </li>
-            ))
-          )}
-        </ul>
+
+        <div>
+          <h3 className="text-pink-text font-semibold text-sm mb-2">Main draw</h3>
+          <ul className="space-y-2 max-h-48 overflow-y-auto divide-y divide-pink-soft border border-pink-soft/40 rounded-xl">
+            {inDrawChrono.length === 0 ? (
+              <li className="text-pink-text-muted text-sm py-3 px-3">No {tab} entrants yet.</li>
+            ) : (
+              inDrawChrono.map((p, i) => (
+                <li key={p.id} className="flex items-center gap-2 px-3 py-2">
+                  <span className="text-pink-text-muted text-xs font-medium w-6 shrink-0 tabular-nums">{i + 1}.</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-pink-primary shrink-0" />
+                  <span className="text-pink-text min-w-0">
+                    {getDisplayNameWithRatings(p)}
+                    <span className="text-pink-accent ml-2 text-xs font-semibold">
+                      seed #{seedById.get(p.id) ?? '—'}
+                    </span>
+                  </span>
+                </li>
+              ))
+            )}
+          </ul>
+        </div>
+
+        {waiting.length > 0 && (
+          <div>
+            <h3 className="text-pink-text font-semibold text-sm mb-2">Waiting list</h3>
+            <ul className="space-y-2 max-h-40 overflow-y-auto divide-y divide-pink-soft border border-pink-muted/50 rounded-xl bg-pink-soft/20">
+              {waiting.map((p, i) => (
+                <li key={p.id} className="flex items-center gap-2 px-3 py-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-pink-text-muted shrink-0" />
+                  <span className="text-pink-text-muted min-w-0">
+                    WL #{i + 1} · {getDisplayNameWithRatings(p)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   )

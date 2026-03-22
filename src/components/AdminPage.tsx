@@ -21,6 +21,7 @@ import { verifyAdminKey, deleteParticipant, setMatchResult, clearMatchResult } f
 import { AdminEventPlanning } from './AdminEventPlanning'
 import { getDisplayNameWithRatings } from '../lib/participantsApi'
 import { DOUBLES_ENABLED } from '../lib/featureFlags'
+import { splitPoolBySignupOrder, formatAdminSignedUpAt } from '../lib/drawPool'
 
 const ADMIN_KEY_STORAGE = 'sf-tennis-admin-key'
 
@@ -171,19 +172,19 @@ export function AdminPage({ onBack }: AdminPageProps) {
       const results = normalizeMatchResults(resultsRaw)
       setMatchResults(results)
 
-      const singles = data.filter((p) => p.type === 'singles')
-      const doubles = data.filter((p) => p.type === 'doubles')
+      const singlesInDraw = splitPoolBySignupOrder(data, 'singles').inDraw
+      const doublesInDraw = splitPoolBySignupOrder(data, 'doubles').inDraw
 
-      if (singles.length >= 2) {
-        const sp = toTournamentParticipants(singles)
+      if (singlesInDraw.length >= 2) {
+        const sp = toTournamentParticipants(singlesInDraw)
         let draw = applyMatchResults(generateDraw(sp), results.singles)
         draw = applyPredictionsToDraw(draw)
         setSinglesDraw(draw)
       } else {
         setSinglesDraw(null)
       }
-      if (doubles.length >= 2) {
-        const dp = toTournamentParticipants(doubles)
+      if (doublesInDraw.length >= 2) {
+        const dp = toTournamentParticipants(doublesInDraw)
         let draw = applyMatchResults(generateDraw(dp), results.doubles)
         draw = applyPredictionsToDraw(draw)
         setDoublesDraw(draw)
@@ -307,7 +308,10 @@ export function AdminPage({ onBack }: AdminPageProps) {
 
   const draw = tab === 'singles' ? singlesDraw : doublesDraw
   const results = (tab === 'singles' ? matchResults.singles : matchResults.doubles) ?? {}
-  const list = [...(tab === 'singles' ? participants.filter((p) => p.type === 'singles') : participants.filter((p) => p.type === 'doubles'))].sort((a, b) => b.rating - a.rating)
+  const poolSplit = splitPoolBySignupOrder(participants, tab)
+  const seedById = new Map(
+    toTournamentParticipants(poolSplit.inDraw).map((tp) => [tp.id, tp.seed as number]),
+  )
 
   const getResult = (matchId: string): { winnerId: string; score: string } => {
     const val = results[matchId]
@@ -405,28 +409,75 @@ export function AdminPage({ onBack }: AdminPageProps) {
           </button>
         </div>
 
-        <section className="rounded-3xl bg-white shadow-card p-4 sm:p-6 border border-pink-soft/50">
-          <h2 className="font-display text-lg text-pink-text mb-4">Participants (delete)</h2>
-          <ul className="space-y-2 divide-y divide-pink-soft">
-            {list.length === 0 ? (
-              <li className="text-pink-text-muted text-sm py-2">No {tab} participants</li>
-            ) : (
-              list.map((p, i) => (
-                <li key={p.id} className="flex items-center justify-between py-2">
-                  <span className="text-pink-text">
-                    {getDisplayNameWithRatings(p)}
-                    <span className="text-pink-accent ml-2 text-xs font-semibold">#{i + 1}</span>
-                  </span>
-                  <button
-                    onClick={() => handleDelete(p.id)}
-                    className="min-h-[36px] px-3 rounded-lg bg-red-100 text-red-600 text-sm font-medium hover:bg-red-200"
+        <section className="rounded-3xl bg-white shadow-card p-4 sm:p-6 border border-pink-soft/50 space-y-6">
+          <h2 className="font-display text-lg text-pink-text">Participants (delete)</h2>
+          <p className="text-pink-text-muted text-xs">
+            Main draw = first 16 sign-ups (by time). NTRP seed shown for bracket. Everyone’s{' '}
+            <strong>signup time</strong> is listed below. Waiting = sign-ups after the 16th.
+          </p>
+          <div>
+            <h3 className="text-sm font-semibold text-pink-text mb-2">Main draw</h3>
+            <ul className="space-y-2 divide-y divide-pink-soft">
+              {poolSplit.inDraw.length === 0 ? (
+                <li className="text-pink-text-muted text-sm py-2">No {tab} entrants</li>
+              ) : (
+                poolSplit.inDraw.map((p) => (
+                  <li
+                    key={p.id}
+                    className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between py-3"
                   >
-                    Delete
-                  </button>
-                </li>
-              ))
-            )}
-          </ul>
+                    <div className="text-pink-text text-sm min-w-0">
+                      <div>
+                        {getDisplayNameWithRatings(p)}
+                        <span className="text-pink-accent ml-2 text-xs font-semibold">
+                          seed #{seedById.get(p.id) ?? '—'}
+                        </span>
+                      </div>
+                      <div className="text-pink-text-muted text-xs mt-1">
+                        Signed up: {formatAdminSignedUpAt(p.createdAt)}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(p.id)}
+                      className="min-h-[36px] px-3 rounded-lg bg-red-100 text-red-600 text-sm font-medium hover:bg-red-200 shrink-0 self-start sm:self-center"
+                    >
+                      Delete
+                    </button>
+                  </li>
+                ))
+              )}
+            </ul>
+          </div>
+          {poolSplit.waiting.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-pink-text mb-2">Waiting list</h3>
+              <ul className="space-y-2 divide-y divide-pink-soft">
+                {poolSplit.waiting.map((p, i) => (
+                  <li
+                    key={p.id}
+                    className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between py-3"
+                  >
+                    <div className="text-pink-text-muted text-sm min-w-0">
+                      <div>
+                        WL #{i + 1} · {getDisplayNameWithRatings(p)}
+                      </div>
+                      <div className="text-pink-text-muted text-xs mt-1">
+                        Signed up: {formatAdminSignedUpAt(p.createdAt)}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(p.id)}
+                      className="min-h-[36px] px-3 rounded-lg bg-red-100 text-red-600 text-sm font-medium hover:bg-red-200 shrink-0 self-start sm:self-center"
+                    >
+                      Delete
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </section>
 
         <section className="rounded-3xl bg-white shadow-card p-4 sm:p-6 border border-pink-soft/50">
