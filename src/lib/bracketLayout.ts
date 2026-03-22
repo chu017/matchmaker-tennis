@@ -4,9 +4,14 @@
  */
 import type { Match, TournamentDraw } from './tournament'
 
-export const BRACKET_SLOT_PX = 100
-export const BRACKET_CARD_GAP = 12
-export const BRACKET_CARD_HEIGHT = BRACKET_SLOT_PX - BRACKET_CARD_GAP
+/** Vertical space between match card centers in R1 (card + gap). */
+export const BRACKET_CARD_GAP = 16
+/**
+ * Fixed slot height for tree layout: must fit MatchCard header + 2× player row.
+ * (Smaller values clip the second player when the card uses flex + h-full.)
+ */
+export const BRACKET_CARD_HEIGHT = 168
+export const BRACKET_SLOT_PX = BRACKET_CARD_HEIGHT + BRACKET_CARD_GAP
 
 export type BracketLayout = {
   /** Top offset in px for each match id */

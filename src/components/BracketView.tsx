@@ -93,13 +93,14 @@ function RoundColumnTree({
         return (
           <div
             key={m.id}
-            className="absolute left-0 right-0 max-w-md mx-auto px-0.5"
+            className="absolute left-0 right-0 max-w-md mx-auto px-0.5 flex items-center justify-center"
             style={{
               top,
               height: layout.cardHeight,
             }}
           >
-            <MatchCard match={m} className="h-full min-h-0" />
+            {/* Natural-height card, vertically centered in slot — avoids empty white flex gap below short rows */}
+            <MatchCard match={m} treeSlot className="w-full max-h-full" />
           </div>
         )
       })}
@@ -292,7 +293,7 @@ function PlayerSlot({
 
   return (
     <div
-      className={`px-3 py-2 text-sm font-medium flex justify-between items-center gap-2 min-h-[2.5rem] ${
+      className={`px-3 py-2 text-sm font-medium flex justify-between items-center gap-2 min-h-[2.75rem] shrink-0 ${
         isWinner
           ? 'text-pink-primary bg-pink-soft font-semibold'
           : isPredicted
@@ -316,9 +317,12 @@ function PlayerSlot({
 function MatchCard({
   match,
   className = '',
+  treeSlot = false,
 }: {
   match: TournamentDraw['matches'][0]
   className?: string
+  /** Bracket tree: fixed-height slot; card stays content-sized and is vertically centered */
+  treeSlot?: boolean
 }) {
   const isBye = match.isBye
   const predWinner = match.predictedWinner
@@ -329,7 +333,7 @@ function MatchCard({
     <div
       className={`w-full max-w-[min(100%,20rem)] mx-auto sm:max-w-none sm:mx-0 rounded-xl overflow-hidden shadow-card flex flex-col ${
         isBye ? 'border border-pink-muted bg-pink-soft/50' : 'border border-pink-soft bg-white'
-      } ${className}`}
+      } ${treeSlot ? 'min-h-0 max-h-full overflow-y-auto' : ''} ${className}`}
     >
       <div className="px-3 py-2 bg-pink-soft flex justify-between items-center gap-2 shrink-0">
         <span className="text-pink-text-muted text-xs font-medium">
@@ -342,7 +346,8 @@ function MatchCard({
           )}
         </span>
       </div>
-      <div className="divide-y divide-pink-soft flex-1 flex flex-col min-h-0">
+      {/* No flex-1 here — it stretched the white body to fill the tree slot and looked like empty space */}
+      <div className="divide-y divide-pink-soft flex flex-col shrink-0">
         <PlayerSlot
           player={match.player1}
           isWinner={match.winner?.id === match.player1?.id}

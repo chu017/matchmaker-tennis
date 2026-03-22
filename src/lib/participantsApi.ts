@@ -61,13 +61,28 @@ export interface MatchResults {
   doubles: Record<string, MatchResultValue>
 }
 
+/** Ensure API / stored payloads always have object maps (avoids undefined.singles crashes). */
+export function normalizeMatchResults(data: unknown): MatchResults {
+  if (!data || typeof data !== 'object') return { singles: {}, doubles: {} }
+  const o = data as Record<string, unknown>
+  const singles =
+    o.singles != null && typeof o.singles === 'object' && !Array.isArray(o.singles)
+      ? (o.singles as Record<string, MatchResultValue>)
+      : {}
+  const doubles =
+    o.doubles != null && typeof o.doubles === 'object' && !Array.isArray(o.doubles)
+      ? (o.doubles as Record<string, MatchResultValue>)
+      : {}
+  return { singles, doubles }
+}
+
 export async function fetchMatchResults(): Promise<MatchResults> {
   const res = await fetch(`/api/match-results?t=${Date.now()}`, { cache: 'no-store' })
   const text = await res.text()
   if (!res.ok) return { singles: {}, doubles: {} }
   if (isProbablyHtml(text)) return { singles: {}, doubles: {} }
   try {
-    return JSON.parse(text) as MatchResults
+    return normalizeMatchResults(JSON.parse(text))
   } catch {
     return { singles: {}, doubles: {} }
   }

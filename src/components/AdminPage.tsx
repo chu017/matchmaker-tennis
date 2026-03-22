@@ -1,5 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
-import { fetchParticipants, fetchMatchResults, type StoredParticipant, type MatchResults } from '../lib/participantsApi'
+import {
+  fetchParticipants,
+  fetchMatchResults,
+  normalizeMatchResults,
+  type StoredParticipant,
+  type MatchResults,
+} from '../lib/participantsApi'
 import { toTournamentParticipants } from '../lib/participantUtils'
 import {
   generateDraw,
@@ -159,8 +165,9 @@ export function AdminPage({ onBack }: AdminPageProps) {
 
   const loadData = useCallback(async () => {
     try {
-      const [data, results] = await Promise.all([fetchParticipants(), fetchMatchResults()])
+      const [data, resultsRaw] = await Promise.all([fetchParticipants(), fetchMatchResults()])
       setParticipants(data)
+      const results = normalizeMatchResults(resultsRaw)
       setMatchResults(results)
 
       const singles = data.filter((p) => p.type === 'singles')
@@ -184,6 +191,9 @@ export function AdminPage({ onBack }: AdminPageProps) {
       }
     } catch {
       setParticipants([])
+      setMatchResults({ singles: {}, doubles: {} })
+      setSinglesDraw(null)
+      setDoublesDraw(null)
     }
   }, [])
 
@@ -235,7 +245,7 @@ export function AdminPage({ onBack }: AdminPageProps) {
     setSavedMatchId(null)
     try {
       const results = await setMatchResult(matchId, winnerId, tab, adminKey, score)
-      setMatchResults(results)
+      setMatchResults(normalizeMatchResults(results))
       await loadData()
       setSavedMatchId(matchId)
       setTimeout(() => setSavedMatchId(null), 2000)
@@ -253,7 +263,7 @@ export function AdminPage({ onBack }: AdminPageProps) {
     const ids = draw ? [matchId, ...getDownstreamMatchIds(matchId, draw)] : [matchId]
     try {
       const results = await clearMatchResult(ids, tab, adminKey)
-      setMatchResults(results)
+      setMatchResults(normalizeMatchResults(results))
       await loadData()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to clear result')
@@ -291,7 +301,7 @@ export function AdminPage({ onBack }: AdminPageProps) {
   }
 
   const draw = tab === 'singles' ? singlesDraw : doublesDraw
-  const results = tab === 'singles' ? matchResults.singles : matchResults.doubles
+  const results = (tab === 'singles' ? matchResults.singles : matchResults.doubles) ?? {}
   const list = [...(tab === 'singles' ? participants.filter((p) => p.type === 'singles') : participants.filter((p) => p.type === 'doubles'))].sort((a, b) => b.rating - a.rating)
 
   const getResult = (matchId: string): { winnerId: string; score: string } => {
