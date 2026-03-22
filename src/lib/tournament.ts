@@ -1,7 +1,23 @@
 /**
- * Tennis tournament draw logic for SF Matchmaker
- * Generates single-elimination brackets with proper seeding
+ * Tennis tournament draw — single elimination, SF Tennis Open rules
+ *
+ * **Field size:** Up to 16 players per event. If more than 16 sign up, only the top 16
+ * by rating (NTRP 2.5–4.5) enter the draw.
+ *
+ * **Seeding:** Sort by rating descending; ties broken by existing seed (lower = stronger).
+ *
+ * **Fair bracket:** Uses standard ITF-style single-elimination positions for 2/4/8/16 draws.
+ * That spreads strength so:
+ * - Seeds 1 vs 2 can only meet in the final (16 draw).
+ * - The **top 4 by rating** land in **four different quarterfinal quadrants** (1/4 区).
+ * - Weaker players are paired with stronger ones early (1 vs 16, 2 vs 15, … when the field is full).
+ *
+ * **Byes:** Bracket size is the next power of 2 (max 16). Empty slots produce byes; the way
+ * seeds map to lines, higher seeds tend to receive byes when the field is not full.
  */
+
+/** Hard cap for singles/doubles draw size */
+export const MAX_DRAW_PLAYERS = 16
 
 export interface Participant {
   id: string;
@@ -42,46 +58,55 @@ function nextPowerOf2(n: number): number {
 }
 
 /**
- * Seed bracket with balanced first round: pair adjacent seeds (1 vs 2, 3 vs 4, ...)
- * so each first-round match has ~50-50 win probability.
+ * Standard single-elimination line positions.
+ * First round pairs slot `i` with slot `i + size/2` (see generateFirstRoundMatches).
+ * Index `s` = tournament seed (1-based) → bracket slot index (0-based).
+ *
+ * For size 16 this is the usual 1v16, 8v9, 5v12, … ordering so seeds 1–4 occupy
+ * four different quarterfinal sections.
  */
-function seedBracket(participants: Participant[], bracketSize: number): (Participant | null)[] {
-  const slots: (Participant | null)[] = new Array(bracketSize).fill(null);
+const SEED_TO_SLOT_BY_SIZE: Record<number, number[]> = {
+  2: [0, 1],
+  // 1v4, 2v3
+  4: [0, 1, 3, 2],
+  // 1v8, 4v5, 3v6, 2v7
+  8: [0, 3, 2, 1, 5, 4, 6, 7],
+  // 1v16, 8v9, 5v12, 4v13, 3v14, 6v11, 7v10, 2v15
+  16: [0, 7, 4, 3, 2, 5, 6, 1, 9, 14, 13, 12, 11, 10, 15, 8],
+}
 
-  // Sort by seed (unseeded go last)
-  const sorted = [...participants].sort((a, b) => {
-    const seedA = a.seed ?? Infinity;
-    const seedB = b.seed ?? Infinity;
-    return seedA - seedB;
-  });
-
-  // Balanced first round: (1,2), (3,4), (5,6), ... for ~50-50 matchups
-  const seedOrder = getSeedOrderBalanced(bracketSize);
-
-  let playerIdx = 0;
-  for (const slot of seedOrder) {
-    if (playerIdx < sorted.length) {
-      slots[slot] = sorted[playerIdx];
-      playerIdx++;
-    }
+function getSeedToSlotTable(bracketSize: number): number[] {
+  const t = SEED_TO_SLOT_BY_SIZE[bracketSize]
+  if (!t) {
+    throw new Error(`Unsupported bracket size: ${bracketSize}`)
   }
-
-  return slots;
+  return t
 }
 
 /**
- * Get slot order for balanced first round: pair adjacent seeds (1 vs 2, 3 vs 4, ...)
- * so each first-round match has ~50-50 win probability.
+ * Sort strongest first for draw entry, then place seeds 1..n on standard lines.
  */
-function getSeedOrderBalanced(size: number): number[] {
-  if (size <= 2) return [0, 1];
-  const half = size / 2;
-  const result: number[] = [];
-  for (let i = 0; i < half; i++) {
-    result.push(i);
-    result.push(i + half);
+function orderParticipantsForDraw(participants: Participant[]): Participant[] {
+  return [...participants].sort((a, b) => {
+    const ra = a.rating ?? -Infinity
+    const rb = b.rating ?? -Infinity
+    if (rb !== ra) return rb - ra
+    const sa = a.seed ?? Infinity
+    const sb = b.seed ?? Infinity
+    return sa - sb
+  })
+}
+
+function seedBracketStandard(participants: Participant[], bracketSize: number): (Participant | null)[] {
+  const slots: (Participant | null)[] = new Array(bracketSize).fill(null)
+  const table = getSeedToSlotTable(bracketSize)
+  const n = participants.length
+  for (let s = 0; s < n; s++) {
+    const slotIndex = table[s]
+    if (slotIndex === undefined) break
+    slots[slotIndex] = participants[s]
   }
-  return result;
+  return slots
 }
 
 /**
@@ -114,7 +139,7 @@ function generateFirstRoundMatches(
 }
 
 /**
- * Generate the complete tournament draw
+ * Generate the complete tournament draw (max {@link MAX_DRAW_PLAYERS}, standard seeding).
  */
 export function generateDraw(participants: Participant[]): TournamentDraw {
   if (participants.length < 2) {
@@ -125,10 +150,18 @@ export function generateDraw(participants: Participant[]): TournamentDraw {
     };
   }
 
-  const bracketSize = nextPowerOf2(participants.length);
-  const rounds = Math.log2(bracketSize);
-  const seededSlots = seedBracket(participants, bracketSize);
-  const firstRoundMatches = generateFirstRoundMatches(seededSlots, 'r1');
+  const ordered = orderParticipantsForDraw(participants)
+  const inDraw = ordered.slice(0, MAX_DRAW_PLAYERS).map((p, i) => ({
+    ...p,
+    seed: i + 1,
+  }))
+
+  const n = inDraw.length
+  const rawSize = nextPowerOf2(n)
+  const bracketSize = Math.min(MAX_DRAW_PLAYERS, rawSize)
+  const rounds = Math.log2(bracketSize)
+  const seededSlots = seedBracketStandard(inDraw, bracketSize)
+  const firstRoundMatches = generateFirstRoundMatches(seededSlots, 'r1')
 
   // Build all rounds (quarters, semis, final)
   const allMatches: Match[] = [...firstRoundMatches];
@@ -151,7 +184,7 @@ export function generateDraw(participants: Participant[]): TournamentDraw {
   }
 
   return {
-    participants,
+    participants: inDraw,
     matches: allMatches,
     rounds,
   };
@@ -177,8 +210,6 @@ export function applyMatchResults(
   draw: TournamentDraw,
   results: Record<string, MatchResultValue>
 ): TournamentDraw {
-  if (Object.keys(results).length === 0) return draw
-
   const participantsById = new Map(draw.participants.map((p) => [p.id, p]))
 
   const matches = draw.matches.map((m) => {
@@ -189,29 +220,24 @@ export function applyMatchResults(
     return { ...m, winner: winner ?? m.winner, score }
   })
 
-  // Advance winners to next round: r{N}-{i} is fed by r{N-1}-{2*i} and r{N-1}-{2*i+1}
-  // When we don't have both feeders, explicitly reset player1/player2 to avoid stale data
+  // Advance winners into the next round. Must run even when `results` is empty so bye
+  // matches (winner set at draw time) immediately fill downstream slots.
+  // Pair each side independently: bye vs TBD → one name + TBD; both byes → both names.
   for (let r = 2; r <= draw.rounds; r++) {
-    const prevMatches = matches.filter((m) => m.round === r - 1)
-    const currMatches = matches.filter((m) => m.round === r)
+    const prevMatches = matches.filter((m) => m.round === r - 1).sort((a, b) => a.position - b.position)
+    const currMatches = matches.filter((m) => m.round === r).sort((a, b) => a.position - b.position)
     for (let i = 0; i < currMatches.length; i++) {
       const left = prevMatches[i * 2]
       const right = prevMatches[i * 2 + 1]
       const curr = currMatches[i]
       const idx = matches.findIndex((m) => m.id === curr.id)
       if (idx < 0) continue
-      if (left?.winner && right?.winner) {
-        matches[idx] = {
-          ...matches[idx],
-          player1: left.winner,
-          player2: right.winner,
-        }
-      } else {
-        matches[idx] = {
-          ...matches[idx],
-          player1: null,
-          player2: null,
-        }
+      const p1 = left?.winner ?? null
+      const p2 = right?.winner ?? null
+      matches[idx] = {
+        ...matches[idx],
+        player1: p1,
+        player2: p2,
       }
     }
   }

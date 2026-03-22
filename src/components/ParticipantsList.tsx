@@ -47,7 +47,8 @@ export function ParticipantsList({ participants, tab, onTabChange }: Participant
           {list.length} signed up • Live
         </p>
         <p className="text-pink-text-muted text-xs mb-4">
-          # = seed (by rating), (rating) = NTRP. Doubles: pair avg for seed.
+          # = seed by NTRP (2.5–4.5). Draw: max 16; top 4 seeds in four different quarters; extra spots =
+          byes. Doubles: pair average for seed.
         </p>
         <ul className="space-y-2 max-h-64 overflow-y-auto divide-y divide-pink-soft">
           {list.length === 0 ? (

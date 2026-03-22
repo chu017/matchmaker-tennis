@@ -267,7 +267,7 @@ export function BracketView({ draw, showTitle = true }: BracketViewProps) {
       )}
 
       <p className="text-pink-text-muted text-sm mt-4">
-        {draw.participants.length} players • {draw.rounds} rounds • Single elimination
+        {draw.participants.length} in draw (max 16) • {draw.rounds} rounds • Single elimination
         {draw.matches.some((m) => m.predictedWinner) && (
           <span className="ml-2 text-pink-primary">• Minimax predictions</span>
         )}
