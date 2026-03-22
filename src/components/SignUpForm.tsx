@@ -2,12 +2,25 @@ import { useState, useEffect } from 'react'
 import { addParticipant } from '../lib/participantsApi'
 import { DOUBLES_ENABLED } from '../lib/featureFlags'
 
+/** NTRP levels allowed for this event */
+const NTRP_LEVELS = [2.5, 3.0, 3.5, 4.0, 4.5] as const
+
+/** Default self (and partner) rating — must match option values from {@link ntrpOptionValue}. */
+const DEFAULT_SELF_RATING = 3.0
+
+function ntrpOptionValue(r: number): string {
+  return r.toFixed(1)
+}
+
+const selectClassName =
+  'w-full min-h-[44px] px-4 py-3 rounded-xl bg-pink-soft/60 border-0 text-pink-text focus:outline-none focus:ring-2 focus:ring-pink-primary/40 touch-manipulation'
+
 export function SignUpForm() {
   const [name, setName] = useState('')
-  const [rating, setRating] = useState('')
+  const [rating, setRating] = useState('3.0')
   const [type, setType] = useState<'singles' | 'doubles'>('singles')
   const [partnerName, setPartnerName] = useState('')
-  const [partnerRating, setPartnerRating] = useState('')
+  const [partnerRating, setPartnerRating] = useState(() => ntrpOptionValue(DEFAULT_SELF_RATING))
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -33,15 +46,16 @@ export function SignUpForm() {
     try {
       await addParticipant({
         name: n,
-        rating: rating ? parseFloat(rating) : 3.0,
+        rating: parseFloat(rating) || 3.0,
         type,
         partnerName: type === 'doubles' ? partnerName.trim() : undefined,
         partnerRating: type === 'doubles' && partnerRating ? parseFloat(partnerRating) : undefined,
       })
       setSuccess(true)
       setName('')
-      setRating('')
+      setRating(ntrpOptionValue(DEFAULT_SELF_RATING))
       setPartnerName('')
+      setPartnerRating(ntrpOptionValue(DEFAULT_SELF_RATING))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Sign up failed')
     } finally {
@@ -84,16 +98,27 @@ export function SignUpForm() {
           required
           className="w-full min-h-[44px] px-4 py-3 rounded-xl bg-pink-soft/60 border-0 text-pink-text placeholder-pink-text-muted focus:outline-none focus:ring-2 focus:ring-pink-primary/40 touch-manipulation"
         />
-        <input
-          type="number"
-          min="0"
-          max="7"
-          step="0.1"
-          value={rating}
-          onChange={(e) => setRating(e.target.value)}
-          placeholder="Self rating (default 3.0)"
-          className="w-full min-h-[44px] px-4 py-3 rounded-xl bg-pink-soft/60 border-0 text-pink-text placeholder-pink-text-muted focus:outline-none focus:ring-2 focus:ring-pink-primary/40 touch-manipulation"
-        />
+        <div>
+          <label htmlFor="signup-self-rating" className="block text-pink-text-muted text-sm mb-1.5">
+            Self rating (NTRP)
+          </label>
+          <select
+            id="signup-self-rating"
+            value={rating}
+            onChange={(e) => setRating(e.target.value)}
+            required
+            className={selectClassName}
+          >
+            {NTRP_LEVELS.map((r) => {
+              const v = ntrpOptionValue(r)
+              return (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              )
+            })}
+          </select>
+        </div>
         <div>
           <label className="block text-pink-text-muted text-sm mb-2">Game type</label>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
@@ -131,16 +156,24 @@ export function SignUpForm() {
               required={type === 'doubles'}
               className="w-full min-h-[44px] px-4 py-3 rounded-xl bg-pink-soft/60 border-0 text-pink-text placeholder-pink-text-muted focus:outline-none focus:ring-2 focus:ring-pink-primary/40 touch-manipulation"
             />
-            <input
-              type="number"
-              min="0"
-              max="7"
-              step="0.1"
-              value={partnerRating}
-              onChange={(e) => setPartnerRating(e.target.value)}
-              placeholder="Partner's rating (default 3.0)"
-              className="w-full min-h-[44px] px-4 py-3 rounded-xl bg-pink-soft/60 border-0 text-pink-text placeholder-pink-text-muted focus:outline-none focus:ring-2 focus:ring-pink-primary/40 touch-manipulation"
-            />
+            <div>
+              <label htmlFor="signup-partner-rating" className="block text-pink-text-muted text-sm mb-1.5">
+                Partner rating (NTRP)
+              </label>
+              <select
+                id="signup-partner-rating"
+                value={partnerRating}
+                onChange={(e) => setPartnerRating(e.target.value)}
+                required={type === 'doubles'}
+                className={selectClassName}
+              >
+                {NTRP_LEVELS.map((r) => (
+                  <option key={r} value={String(r)}>
+                    {r}
+                  </option>
+                ))}
+              </select>
+            </div>
           </>
         )}
         <button
