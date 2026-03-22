@@ -38,6 +38,44 @@ body::before {
   pointer-events: none;
   z-index: 0;
   opacity: 0.5;
+  animation: dot-grid-drift 45s linear infinite;
+}
+
+/* Soft pink “aurora” blobs — slow graphic motion behind the app */
+body::after {
+  content: '';
+  position: fixed;
+  inset: -20%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 55% 45% at 15% 25%, rgba(255, 92, 151, 0.14), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 85% 75%, rgba(216, 27, 96, 0.11), transparent 50%),
+    radial-gradient(ellipse 40% 35% at 70% 15%, rgba(252, 228, 236, 0.5), transparent 45%);
+  animation: ambient-blobs 22s ease-in-out infinite alternate;
+}
+
+@keyframes dot-grid-drift {
+  0% {
+    background-position: 0 0;
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.58;
+  }
+  100% {
+    background-position: 24px 24px;
+    opacity: 0.45;
+  }
+}
+
+@keyframes ambient-blobs {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+  }
+  100% {
+    transform: translate3d(-2%, 1.5%, 0) scale(1.06) rotate(2deg);
+  }
 }
 
 /* Prevent iOS zoom on input focus (font-size < 16px triggers zoom) */
@@ -51,4 +89,18 @@ body::before {
 .overflow-x-auto,
 .overflow-y-auto {
   -webkit-overflow-scrolling: touch;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before,
+  body::after {
+    animation: none !important;
+  }
+  body::before {
+    opacity: 0.5;
+    background-position: 0 0;
+  }
+  body::after {
+    transform: none;
+  }
 }

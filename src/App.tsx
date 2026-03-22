@@ -80,8 +80,20 @@ function App() {
         <div className="max-w-7xl mx-auto px-4 py-3 sm:py-4 sm:px-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-full bg-white shadow-sm flex items-center justify-center">
-                <span className="text-lg sm:text-xl">🎾</span>
+              <div className="relative w-11 h-11 sm:w-12 sm:h-12 shrink-0 flex items-center justify-center">
+                <div
+                  className="absolute inset-0 rounded-full border border-dashed border-pink-primary/35 motion-reduce:hidden animate-orbit-dashed"
+                  aria-hidden
+                />
+                <div className="relative z-[1] w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white shadow-sm flex items-center justify-center animate-header-glow motion-reduce:animate-none">
+                  <span
+                    className="text-lg sm:text-xl inline-block animate-float-brand motion-reduce:animate-none select-none"
+                    role="img"
+                    aria-hidden
+                  >
+                    🎾
+                  </span>
+                </div>
               </div>
               <div className="min-w-0">
                 <h1 className="font-display text-xl sm:text-3xl tracking-wider text-pink-text truncate">

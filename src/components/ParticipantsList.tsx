@@ -23,9 +23,9 @@ export function ParticipantsList({ participants, tab, onTabChange }: Participant
       <div className="flex gap-2 mb-4 flex-wrap">
         <button
           onClick={() => onTabChange('singles')}
-          className={`min-h-[44px] px-4 py-2.5 rounded-full text-sm font-medium transition-colors touch-manipulation ${
+          className={`min-h-[44px] px-4 py-2.5 rounded-full text-sm font-medium touch-manipulation transition-all duration-200 ease-out active:scale-[0.98] motion-reduce:active:scale-100 ${
             tab === 'singles'
-              ? 'bg-pink-primary text-white'
+              ? 'bg-pink-primary text-white shadow-sm'
               : 'bg-pink-soft/80 text-pink-text-muted hover:bg-pink-muted/60'
           }`}
         >
@@ -33,38 +33,40 @@ export function ParticipantsList({ participants, tab, onTabChange }: Participant
         </button>
         <button
           onClick={() => onTabChange('doubles')}
-          className={`min-h-[44px] px-4 py-2.5 rounded-full text-sm font-medium transition-colors touch-manipulation ${
+          className={`min-h-[44px] px-4 py-2.5 rounded-full text-sm font-medium touch-manipulation transition-all duration-200 ease-out active:scale-[0.98] motion-reduce:active:scale-100 ${
             tab === 'doubles'
-              ? 'bg-pink-primary text-white'
+              ? 'bg-pink-primary text-white shadow-sm'
               : 'bg-pink-soft/80 text-pink-text-muted hover:bg-pink-muted/60'
           }`}
         >
           Doubles ({doubles.length})
         </button>
       </div>
-      <p className="text-pink-text-muted text-sm mb-4">
-        {list.length} signed up • Live
-      </p>
-      <p className="text-pink-text-muted text-xs mb-4">
-        # = seed (by rating), (rating) = NTRP. Doubles: pair avg for seed.
-      </p>
-      <ul className="space-y-2 max-h-64 overflow-y-auto divide-y divide-pink-soft">
-        {list.length === 0 ? (
-          <li className="text-pink-text-muted text-sm py-2">
-            No {tab} participants yet. Be the first to sign up!
-          </li>
-        ) : (
-          list.map((p, i) => (
-            <li key={p.id} className="flex items-center gap-2 px-3 py-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-pink-primary shrink-0" />
-              <span className="text-pink-text">
-                {getDisplayNameWithRatings(p)}
-                <span className="text-pink-accent ml-2 text-xs font-semibold">#{i + 1}</span>
-              </span>
+      <div key={tab} className="animate-draw-tab motion-reduce:animate-none">
+        <p className="text-pink-text-muted text-sm mb-4">
+          {list.length} signed up • Live
+        </p>
+        <p className="text-pink-text-muted text-xs mb-4">
+          # = seed (by rating), (rating) = NTRP. Doubles: pair avg for seed.
+        </p>
+        <ul className="space-y-2 max-h-64 overflow-y-auto divide-y divide-pink-soft">
+          {list.length === 0 ? (
+            <li className="text-pink-text-muted text-sm py-2">
+              No {tab} participants yet. Be the first to sign up!
             </li>
-          ))
-        )}
-      </ul>
+          ) : (
+            list.map((p, i) => (
+              <li key={p.id} className="flex items-center gap-2 px-3 py-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-pink-primary shrink-0" />
+                <span className="text-pink-text">
+                  {getDisplayNameWithRatings(p)}
+                  <span className="text-pink-accent ml-2 text-xs font-semibold">#{i + 1}</span>
+                </span>
+              </li>
+            ))
+          )}
+        </ul>
+      </div>
     </div>
   )
 }

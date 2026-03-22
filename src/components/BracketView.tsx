@@ -1,7 +1,14 @@
 import { useState, useEffect, useMemo } from 'react'
-import { TournamentDraw, getRoundName, type Participant } from '../lib/tournament'
+import { TournamentDraw, getRoundName, type Participant, type Match } from '../lib/tournament'
 import { formatParticipantDrawInline } from '../lib/drawDisplay'
 import { useMediaQuery } from '../hooks/useMediaQuery'
+import {
+  computeBracketLayout,
+  buildConnectorPaths,
+  type BracketLayout,
+} from '../lib/bracketLayout'
+
+const CONNECTOR_WIDTH = 44
 
 interface BracketViewProps {
   draw: TournamentDraw
@@ -23,8 +30,8 @@ function RoundNavButton({
       disabled={disabled}
       onClick={onClick}
       aria-label={direction === 'prev' ? 'Previous rounds' : 'Next rounds'}
-      className={`shrink-0 flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-pink-soft bg-white shadow-sm text-pink-text transition touch-manipulation ${
-        disabled ? 'opacity-35 cursor-not-allowed' : 'hover:bg-pink-soft/60 active:scale-[0.97]'
+      className={`shrink-0 flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-pink-soft bg-white shadow-sm text-pink-text touch-manipulation transition-all duration-200 ease-out ${
+        disabled ? 'opacity-35 cursor-not-allowed' : 'hover:bg-pink-soft/60 hover:scale-105 active:scale-95'
       }`}
     >
       <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -34,9 +41,78 @@ function RoundNavButton({
   )
 }
 
+function BracketConnectors({
+  layout,
+  leftRound,
+}: {
+  layout: BracketLayout
+  leftRound: number
+}) {
+  const h = layout.totalHeight
+  const stemX = CONNECTOR_WIDTH * 0.4
+  const paths = buildConnectorPaths(layout, leftRound, CONNECTOR_WIDTH, stemX)
+
+  return (
+    <svg
+      width={CONNECTOR_WIDTH}
+      height={h}
+      viewBox={`0 0 ${CONNECTOR_WIDTH} ${h}`}
+      className="shrink-0 text-pink-primary/40 motion-reduce:opacity-60"
+      aria-hidden
+    >
+      {paths.map(({ d, key }) => (
+        <path
+          key={key}
+          d={d}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          vectorEffect="non-scaling-stroke"
+        />
+      ))}
+    </svg>
+  )
+}
+
+function RoundColumnTree({
+  matches,
+  layout,
+}: {
+  matches: Match[]
+  layout: BracketLayout
+}) {
+  return (
+    <div
+      className="relative flex-1 min-w-0 w-full max-w-md mx-auto"
+      style={{ height: layout.totalHeight }}
+    >
+      {matches.map((m) => {
+        const top = layout.topByMatchId.get(m.id) ?? 0
+        return (
+          <div
+            key={m.id}
+            className="absolute left-0 right-0 max-w-md mx-auto px-0.5"
+            style={{
+              top,
+              height: layout.cardHeight,
+            }}
+          >
+            <MatchCard match={m} className="h-full min-h-0" />
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 export function BracketView({ draw, showTitle = true }: BracketViewProps) {
   const isMdUp = useMediaQuery('(min-width: 768px)')
   const [startIdx, setStartIdx] = useState(0)
+  const [panelEnterDir, setPanelEnterDir] = useState<'next' | 'prev'>('next')
+
+  const layout = useMemo(() => computeBracketLayout(draw), [draw])
 
   const matchesByRound = useMemo(
     () =>
@@ -64,6 +140,7 @@ export function BracketView({ draw, showTitle = true }: BracketViewProps) {
 
   useEffect(() => {
     setStartIdx(0)
+    setPanelEnterDir('next')
   }, [roundsKey])
 
   useEffect(() => {
@@ -73,9 +150,7 @@ export function BracketView({ draw, showTitle = true }: BracketViewProps) {
   const clampedStart = Math.min(startIdx, maxStart)
   const visibleRounds = roundNumbers.slice(clampedStart, clampedStart + viewportSize)
 
-  const roundSubtitle = visibleRounds
-    .map((r) => getRoundName(r))
-    .join(' · ')
+  const roundSubtitle = visibleRounds.map((r) => getRoundName(r)).join(' · ')
 
   const positionLabel =
     roundNumbers.length <= 1
@@ -83,6 +158,15 @@ export function BracketView({ draw, showTitle = true }: BracketViewProps) {
       : needsNav
         ? `View ${clampedStart + 1}–${Math.min(clampedStart + viewportSize, roundNumbers.length)} of ${roundNumbers.length}`
         : null
+
+  const leftR = visibleRounds[0]
+  const rightR = visibleRounds[1]
+  const showTreeWithConnectors =
+    isMdUp &&
+    visibleRounds.length === 2 &&
+    rightR === leftR + 1 &&
+    layout.matchesByRound[leftR]?.length > 0 &&
+    layout.matchesByRound[rightR]?.length > 0
 
   return (
     <div className={showTitle ? 'rounded-3xl bg-white shadow-card p-4 sm:p-6 border border-pink-soft/50' : ''}>
@@ -99,7 +183,10 @@ export function BracketView({ draw, showTitle = true }: BracketViewProps) {
               <RoundNavButton
                 direction="prev"
                 disabled={clampedStart <= 0}
-                onClick={() => setStartIdx((s) => Math.max(0, s - 1))}
+                onClick={() => {
+                  setPanelEnterDir('prev')
+                  setStartIdx((s) => Math.max(0, s - 1))
+                }}
               />
               <div className="flex-1 min-w-0 text-center px-1">
                 <p className="font-display text-xs sm:text-sm tracking-wider text-pink-primary uppercase leading-tight">
@@ -112,7 +199,10 @@ export function BracketView({ draw, showTitle = true }: BracketViewProps) {
               <RoundNavButton
                 direction="next"
                 disabled={clampedStart >= maxStart}
-                onClick={() => setStartIdx((s) => Math.min(maxStart, s + 1))}
+                onClick={() => {
+                  setPanelEnterDir('next')
+                  setStartIdx((s) => Math.min(maxStart, s + 1))
+                }}
               />
             </div>
           )}
@@ -125,31 +215,52 @@ export function BracketView({ draw, showTitle = true }: BracketViewProps) {
             </div>
           )}
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-start justify-center gap-6 sm:gap-8 md:gap-10 pb-2">
-            {visibleRounds.map((round, idx) => (
-              <div key={round} className="flex flex-1 min-w-0 max-w-lg sm:max-w-md mx-auto w-full justify-center">
-                <div className="flex items-start w-full">
-                  <div className="flex flex-col flex-1 min-w-0">
-                    <div
-                      className="flex flex-col justify-around gap-2"
-                      style={{
-                        minHeight: `${Math.max(matchesByRound[round].length * 88, 80)}px`,
-                      }}
-                    >
-                      {matchesByRound[round].map((match) => (
-                        <MatchCard key={match.id} match={match} />
-                      ))}
+          <div
+            key={`bracket-${clampedStart}-${viewportSize}-${roundsKey}`}
+            className={`flex justify-center items-start gap-1 sm:gap-0 pb-2 overflow-visible motion-reduce:animate-none ${
+              needsNav
+                ? panelEnterDir === 'next'
+                  ? 'animate-bracket-slide-next'
+                  : 'animate-bracket-slide-prev'
+                : ''
+            }`}
+          >
+            {showTreeWithConnectors ? (
+              <>
+                <RoundColumnTree matches={layout.matchesByRound[leftR] ?? []} layout={layout} />
+                <div className="flex items-start pt-0 shrink-0 px-0.5" style={{ height: layout.totalHeight }}>
+                  <BracketConnectors layout={layout} leftRound={leftR} />
+                </div>
+                <RoundColumnTree matches={layout.matchesByRound[rightR] ?? []} layout={layout} />
+              </>
+            ) : (
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-start justify-center gap-6 sm:gap-8 md:gap-10 w-full">
+                {visibleRounds.map((round, idx) => (
+                  <div key={round} className="flex flex-1 min-w-0 max-w-lg sm:max-w-md mx-auto w-full justify-center">
+                    <div className="flex items-start w-full">
+                      <div className="flex flex-col flex-1 min-w-0">
+                        <div
+                          className="flex flex-col justify-around gap-2"
+                          style={{
+                            minHeight: `${Math.max(matchesByRound[round].length * 88, 80)}px`,
+                          }}
+                        >
+                          {matchesByRound[round].map((match) => (
+                            <MatchCard key={match.id} match={match} />
+                          ))}
+                        </div>
+                      </div>
+                      {idx < visibleRounds.length - 1 && (
+                        <div
+                          className="hidden sm:block w-px self-stretch min-h-[100px] bg-pink-soft shrink-0 mx-4 md:mx-6"
+                          aria-hidden
+                        />
+                      )}
                     </div>
                   </div>
-                  {idx < visibleRounds.length - 1 && (
-                    <div
-                      className="hidden sm:block w-px self-stretch min-h-[100px] bg-pink-soft shrink-0 mx-4 md:mx-6"
-                      aria-hidden
-                    />
-                  )}
-                </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
         </>
       )}
@@ -181,7 +292,7 @@ function PlayerSlot({
 
   return (
     <div
-      className={`px-3 py-2 text-sm font-medium flex justify-between items-center gap-2 ${
+      className={`px-3 py-2 text-sm font-medium flex justify-between items-center gap-2 min-h-[2.5rem] ${
         isWinner
           ? 'text-pink-primary bg-pink-soft font-semibold'
           : isPredicted
@@ -204,8 +315,10 @@ function PlayerSlot({
 
 function MatchCard({
   match,
+  className = '',
 }: {
   match: TournamentDraw['matches'][0]
+  className?: string
 }) {
   const isBye = match.isBye
   const predWinner = match.predictedWinner
@@ -214,11 +327,11 @@ function MatchCard({
 
   return (
     <div
-      className={`w-full max-w-[min(100%,20rem)] mx-auto sm:max-w-none sm:mx-0 rounded-xl overflow-hidden shadow-card ${
+      className={`w-full max-w-[min(100%,20rem)] mx-auto sm:max-w-none sm:mx-0 rounded-xl overflow-hidden shadow-card flex flex-col ${
         isBye ? 'border border-pink-muted bg-pink-soft/50' : 'border border-pink-soft bg-white'
-      }`}
+      } ${className}`}
     >
-      <div className="px-3 py-2 bg-pink-soft flex justify-between items-center gap-2">
+      <div className="px-3 py-2 bg-pink-soft flex justify-between items-center gap-2 shrink-0">
         <span className="text-pink-text-muted text-xs font-medium">
           Match {match.position + 1}
           {isBye && ' (Bye)'}
@@ -229,7 +342,7 @@ function MatchCard({
           )}
         </span>
       </div>
-      <div className="divide-y divide-pink-soft">
+      <div className="divide-y divide-pink-soft flex-1 flex flex-col min-h-0">
         <PlayerSlot
           player={match.player1}
           isWinner={match.winner?.id === match.player1?.id}

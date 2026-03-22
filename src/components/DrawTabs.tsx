@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { TournamentDraw } from '../lib/tournament'
 import { BracketView } from './BracketView'
 
@@ -10,8 +11,15 @@ interface DrawTabsProps {
   onTabChange: (tab: Tab) => void
 }
 
+function drawContentKey(draw: TournamentDraw | null): string {
+  if (!draw) return 'empty'
+  const ids = [...draw.participants].map((p) => p.id).sort().join()
+  return `${draw.rounds}-${ids}`
+}
+
 export function DrawTabs({ singlesDraw, doublesDraw, tab, onTabChange }: DrawTabsProps) {
   const draw = tab === 'singles' ? singlesDraw : doublesDraw
+  const contentKey = useMemo(() => drawContentKey(draw), [draw])
 
   return (
     <div className="rounded-3xl bg-white shadow-card p-4 sm:p-6 overflow-x-auto border border-pink-soft/50">
@@ -22,9 +30,9 @@ export function DrawTabs({ singlesDraw, doublesDraw, tab, onTabChange }: DrawTab
         <div className="flex gap-2 flex-wrap">
           <button
             onClick={() => onTabChange('singles')}
-            className={`min-h-[44px] px-4 py-2.5 rounded-full text-sm font-medium transition-colors touch-manipulation ${
+            className={`min-h-[44px] px-4 py-2.5 rounded-full text-sm font-medium touch-manipulation transition-all duration-200 ease-out active:scale-[0.98] motion-reduce:active:scale-100 ${
               tab === 'singles'
-                ? 'bg-pink-primary text-white'
+                ? 'bg-pink-primary text-white shadow-sm'
                 : 'bg-pink-soft/80 text-pink-text-muted hover:bg-pink-muted/60'
             }`}
           >
@@ -43,18 +51,23 @@ export function DrawTabs({ singlesDraw, doublesDraw, tab, onTabChange }: DrawTab
         </div>
       </div>
 
-      {draw ? (
-        <BracketView key={tab} draw={draw} showTitle={false} />
-      ) : (
-        <div className="border-2 border-dashed border-pink-muted rounded-xl bg-pink-soft/40 p-8 sm:p-12 text-center">
-          <p className="text-pink-text-muted text-lg mb-2">
-            At least 2 {tab} participants needed for the draw
-          </p>
-          <p className="text-pink-text-muted/80 text-sm">
-            Share the link — participants sign up and the draw updates live
-          </p>
-        </div>
-      )}
+      <div
+        key={`${tab}-${contentKey}`}
+        className="animate-spring-reveal motion-reduce:animate-none"
+      >
+        {draw ? (
+          <BracketView draw={draw} showTitle={false} />
+        ) : (
+          <div className="border-2 border-dashed border-pink-muted rounded-xl bg-pink-soft/40 p-8 sm:p-12 text-center">
+            <p className="text-pink-text-muted text-lg mb-2">
+              At least 2 {tab} participants needed for the draw
+            </p>
+            <p className="text-pink-text-muted/80 text-sm">
+              Share the link — participants sign up and the draw updates live
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
