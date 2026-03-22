@@ -31,9 +31,16 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 **Note:** `npm run dev` starts both the Vite frontend and the API server. Participant data is stored in `server/participants.json`.
 
+**Troubleshooting:** If you see errors like `Unexpected token '<'` or “HTML instead of JSON”, the browser is loading the app shell instead of the API. Always run the backend on port **3001** (`npm run dev` or `npm run dev:server`). If you use `vite preview`, start the API first — `vite.config.ts` proxies `/api` to 3001 in preview too.
+
+## Data in Supabase (optional)
+
+Set `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in `.env` (see **[docs/SUPABASE_SOP.md](./docs/SUPABASE_SOP.md)**). Run the SQL migration in Supabase first. The API then uses Postgres for participants, match results, and event plan; unset those vars to use `server/*.json` again. `GET /api/health` shows `"store": "supabase"` or `"json"`.
+
 ## Deploy (free hosting)
 
-See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for deploying to **Render** (recommended) or **GitHub Pages**.
+- **GitHub + hosting:** **[GITHUB.md](./GITHUB.md)** — push to GitHub, then deploy (e.g. Render from your repo).
+- **Platforms & details:** **[DEPLOYMENT.md](./DEPLOYMENT.md)** — Render, GitHub Pages, notes on data and CORS.
 
 ## Build
 

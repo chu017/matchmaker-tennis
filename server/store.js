@@ -1,96 +1,54 @@
 /**
- * Simple JSON file storage for participants and match results
+ * Data store: Supabase when SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY are set, else JSON files.
+ *
+ * Loads `.env` from the project root (parent of `server/`) so the backend works even when
+ * `process.cwd()` is not the repo root. Store backend is chosen lazily on each call so it
+ * matches current env after dotenv runs.
  */
-import fs from 'fs';
+import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { existsSync } from 'fs';
+import * as jsonStore from './store-json.js';
+import * as supabaseStore from './store-supabase.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_FILE = path.join(__dirname, 'participants.json');
-const MATCH_RESULTS_FILE = path.join(__dirname, 'match-results.json');
+const __storeDir = path.dirname(fileURLToPath(import.meta.url));
+const ROOT_ENV = path.join(__storeDir, '..', '.env');
 
-function read() {
-  try {
-    const data = fs.readFileSync(DATA_FILE, 'utf8');
-    return JSON.parse(data);
-  } catch {
-    return { participants: [] };
+let envLoaded = false;
+
+function ensureEnv() {
+  if (envLoaded) return;
+  envLoaded = true;
+  if (existsSync(ROOT_ENV)) {
+    dotenv.config({ path: ROOT_ENV });
+  } else {
+    dotenv.config();
   }
 }
 
-function write(data) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+function useSupabase() {
+  ensureEnv();
+  const url = process.env.SUPABASE_URL?.trim();
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  return Boolean(url && key);
 }
 
-function readMatchResults() {
-  try {
-    const data = fs.readFileSync(MATCH_RESULTS_FILE, 'utf8');
-    return JSON.parse(data);
-  } catch {
-    return { singles: {}, doubles: {} };
-  }
+function getImpl() {
+  ensureEnv();
+  return useSupabase() ? supabaseStore : jsonStore;
 }
 
-function writeMatchResults(data) {
-  fs.writeFileSync(MATCH_RESULTS_FILE, JSON.stringify(data, null, 2));
-}
+export const getParticipants = (...args) => getImpl().getParticipants(...args);
+export const addParticipant = (...args) => getImpl().addParticipant(...args);
+export const deleteParticipant = (...args) => getImpl().deleteParticipant(...args);
+export const getMatchResults = (...args) => getImpl().getMatchResults(...args);
+export const setMatchResult = (...args) => getImpl().setMatchResult(...args);
+export const clearMatchResult = (...args) => getImpl().clearMatchResult(...args);
+export const clearMatchResults = (...args) => getImpl().clearMatchResults(...args);
+export const getEventPlan = (...args) => getImpl().getEventPlan(...args);
+export const setEventPlan = (...args) => getImpl().setEventPlan(...args);
 
-export function getParticipants() {
-  return read().participants;
-}
-
-export function addParticipant(participant) {
-  const data = read();
-  const id = crypto.randomUUID();
-  const entry = {
-    id,
-    name: participant.name.trim(),
-    rating: participant.rating ?? 3.0,
-    type: participant.type || 'singles',
-    partnerName: participant.partnerName?.trim() || null,
-    partnerRating: participant.partnerRating != null ? participant.partnerRating : null,
-    createdAt: new Date().toISOString(),
-  };
-  data.participants.push(entry);
-  write(data);
-  return entry;
-}
-
-export function deleteParticipant(id) {
-  const data = read();
-  const idx = data.participants.findIndex((p) => p.id === id);
-  if (idx === -1) return null;
-  const [removed] = data.participants.splice(idx, 1);
-  write(data);
-  return removed;
-}
-
-export function getMatchResults() {
-  return readMatchResults();
-}
-
-export function setMatchResult(type, matchId, winnerId, score = null) {
-  const data = readMatchResults();
-  const key = type === 'doubles' ? 'doubles' : 'singles';
-  data[key][matchId] = { winnerId, score: score?.trim() || null };
-  writeMatchResults(data);
-  return data;
-}
-
-export function clearMatchResult(type, matchId) {
-  const data = readMatchResults();
-  const key = type === 'doubles' ? 'doubles' : 'singles';
-  delete data[key][matchId];
-  writeMatchResults(data);
-  return data;
-}
-
-export function clearMatchResults(type, matchIds) {
-  const data = readMatchResults();
-  const key = type === 'doubles' ? 'doubles' : 'singles';
-  for (const id of matchIds) {
-    delete data[key][id];
-  }
-  writeMatchResults(data);
-  return data;
+export function getStoreBackend() {
+  return useSupabase() ? 'supabase' : 'json';
 }

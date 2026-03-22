@@ -1,6 +1,7 @@
 /**
  * Participants API - fetch and add participants
  */
+import { isProbablyHtml, parseApiJsonOrError } from './parseApiJson'
 
 export interface StoredParticipant {
   id: string
@@ -30,9 +31,8 @@ export function getDisplayNameWithRatings(p: StoredParticipant): string {
 
 export async function fetchParticipants(): Promise<StoredParticipant[]> {
   const res = await fetch('/api/participants')
-  if (!res.ok) throw new Error('Failed to fetch participants')
-  const data = await res.json()
-  return (data as { participants: StoredParticipant[] }).participants
+  const data = await parseApiJsonOrError<{ participants: StoredParticipant[] }>(res)
+  return data.participants
 }
 
 export async function addParticipant(data: {
@@ -47,11 +47,7 @@ export async function addParticipant(data: {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    throw new Error((err as { error?: string }).error || res.statusText)
-  }
-  return res.json()
+  return parseApiJsonOrError<StoredParticipant>(res)
 }
 
 export interface MatchResultEntry {
@@ -67,6 +63,12 @@ export interface MatchResults {
 
 export async function fetchMatchResults(): Promise<MatchResults> {
   const res = await fetch(`/api/match-results?t=${Date.now()}`, { cache: 'no-store' })
+  const text = await res.text()
   if (!res.ok) return { singles: {}, doubles: {} }
-  return res.json()
+  if (isProbablyHtml(text)) return { singles: {}, doubles: {} }
+  try {
+    return JSON.parse(text) as MatchResults
+  } catch {
+    return { singles: {}, doubles: {} }
+  }
 }

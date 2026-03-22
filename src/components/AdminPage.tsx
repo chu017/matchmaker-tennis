@@ -4,7 +4,8 @@ import { toTournamentParticipants } from '../lib/participantUtils'
 import { generateDraw, applyMatchResults, getRoundName, getDownstreamMatchIds, type TournamentDraw } from '../lib/tournament'
 import { applyPredictionsToDraw } from '../lib/minimax'
 import { verifyAdminKey, deleteParticipant, setMatchResult, clearMatchResult } from '../lib/adminApi'
-import { getDisplayName, getDisplayNameWithRatings } from '../lib/participantsApi'
+import { AdminEventPlanning } from './AdminEventPlanning'
+import { getDisplayNameWithRatings } from '../lib/participantsApi'
 
 const ADMIN_KEY_STORAGE = 'sf-tennis-admin-key'
 
@@ -142,6 +143,7 @@ export function AdminPage({ onBack }: AdminPageProps) {
   const [singlesDraw, setSinglesDraw] = useState<TournamentDraw | null>(null)
   const [doublesDraw, setDoublesDraw] = useState<TournamentDraw | null>(null)
   const [tab, setTab] = useState<'singles' | 'doubles'>('singles')
+  const [adminSection, setAdminSection] = useState<'draw' | 'planning'>('draw')
   const [savingMatchId, setSavingMatchId] = useState<string | null>(null)
   const [savedMatchId, setSavedMatchId] = useState<string | null>(null)
 
@@ -322,6 +324,36 @@ export function AdminPage({ onBack }: AdminPageProps) {
           </div>
         )}
 
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setAdminSection('draw')}
+            className={`min-h-[44px] px-4 py-2.5 rounded-full text-sm font-medium ${
+              adminSection === 'draw' ? 'bg-pink-primary text-white' : 'bg-pink-soft/80 text-pink-text-muted'
+            }`}
+          >
+            Draw & results
+          </button>
+          <button
+            type="button"
+            onClick={() => setAdminSection('planning')}
+            className={`min-h-[44px] px-4 py-2.5 rounded-full text-sm font-medium ${
+              adminSection === 'planning' ? 'bg-pink-primary text-white' : 'bg-pink-soft/80 text-pink-text-muted'
+            }`}
+          >
+            Event planning
+          </button>
+        </div>
+
+        {adminSection === 'planning' ? (
+          <AdminEventPlanning
+            adminKey={adminKey}
+            singlesDraw={singlesDraw}
+            doublesDraw={doublesDraw}
+            onError={setError}
+          />
+        ) : (
+          <>
         <div className="flex gap-2">
           <button
             onClick={() => setTab('singles')}
@@ -405,6 +437,8 @@ export function AdminPage({ onBack }: AdminPageProps) {
             </div>
           )}
         </section>
+          </>
+        )}
       </main>
     </div>
   )

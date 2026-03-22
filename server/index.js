@@ -7,7 +7,18 @@ import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { getParticipants, addParticipant, deleteParticipant, getMatchResults, setMatchResult, clearMatchResult, clearMatchResults } from './store.js';
+import {
+  getParticipants,
+  addParticipant,
+  deleteParticipant,
+  getMatchResults,
+  setMatchResult,
+  clearMatchResults,
+  getEventPlan,
+  setEventPlan,
+  getStoreBackend,
+} from './store.js';
+import { getSupabaseHealth } from './supabaseHealth.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -103,25 +114,33 @@ Rules:
   }
 });
 
-app.get('/api/health', (_, res) => {
-  res.json({ ok: true, hasKey: !!MINIMAX_API_KEY });
+app.get('/api/health', async (_, res) => {
+  const store = getStoreBackend();
+  const database = await getSupabaseHealth();
+  res.json({
+    ok: true,
+    hasKey: !!MINIMAX_API_KEY,
+    store,
+    database,
+  });
 });
 
-app.get('/api/participants', (_, res) => {
+app.get('/api/participants', async (_, res) => {
   try {
-    res.json({ participants: getParticipants() });
+    const participants = await getParticipants();
+    res.json({ participants });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-app.post('/api/participants', (req, res) => {
+app.post('/api/participants', async (req, res) => {
   try {
     const { name, rating, type, partnerName, partnerRating } = req.body;
     if (!name || typeof name !== 'string' || !name.trim()) {
       return res.status(400).json({ error: 'name is required' });
     }
-    const participant = addParticipant({
+    const participant = await addParticipant({
       name: name.trim(),
       rating: rating != null ? Number(rating) : 3.0,
       type: type === 'doubles' ? 'doubles' : 'singles',
@@ -135,9 +154,9 @@ app.post('/api/participants', (req, res) => {
 });
 
 // Public: get match results (read-only for display)
-app.get('/api/match-results', (_, res) => {
+app.get('/api/match-results', async (_, res) => {
   try {
-    res.json(getMatchResults());
+    res.json(await getMatchResults());
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -156,9 +175,9 @@ app.get('/api/admin/verify', (req, res) => {
 });
 
 // Admin: delete participant
-app.delete('/api/admin/participants/:id', requireAdmin, (req, res) => {
+app.delete('/api/admin/participants/:id', requireAdmin, async (req, res) => {
   try {
-    const removed = deleteParticipant(req.params.id);
+    const removed = await deleteParticipant(req.params.id);
     if (!removed) {
       return res.status(404).json({ error: 'Participant not found' });
     }
@@ -186,7 +205,7 @@ app.post('/api/admin/match-result', requireAdmin, (req, res) => {
 });
 
 // Admin: clear match result (matchIds=cascade clears downstream too)
-app.delete('/api/admin/match-result', requireAdmin, (req, res) => {
+app.delete('/api/admin/match-result', requireAdmin, async (req, res) => {
   try {
     const matchIdsParam = req.query.matchIds;
     const matchId = req.query.matchId;
@@ -203,8 +222,28 @@ app.delete('/api/admin/match-result', requireAdmin, (req, res) => {
     if (ids.length === 0) {
       return res.status(400).json({ error: 'matchId or matchIds required' });
     }
-    clearMatchResults(type, ids);
-    res.json(getMatchResults());
+    await clearMatchResults(type, ids);
+    res.json(await getMatchResults());
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin: event planning (courts, schedule, checklist)
+app.get('/api/admin/event-plan', requireAdmin, async (_, res) => {
+  try {
+    const plan = await getEventPlan();
+    res.json(plan ?? {});
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/event-plan', requireAdmin, async (req, res) => {
+  try {
+    const plan = req.body && typeof req.body === 'object' ? req.body : {};
+    await setEventPlan(plan);
+    res.json(plan);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -221,6 +260,7 @@ if (fs.existsSync(path.join(distPath, 'index.html'))) {
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Data store: ${getStoreBackend()} (${getStoreBackend() === 'supabase' ? 'participants, match_results, event_plan in Supabase' : 'server/*.json files'})`);
   if (!MINIMAX_API_KEY) console.warn('Warning: MINIMAX_API_KEY not set');
   if (!ADMIN_SECRET) console.warn('Warning: ADMIN_SECRET not set - admin endpoints disabled');
 });

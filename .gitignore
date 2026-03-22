@@ -5,3 +5,4 @@ dist
 .DS_Store
 server/participants.json
 server/match-results.json
+server/event-plan.json

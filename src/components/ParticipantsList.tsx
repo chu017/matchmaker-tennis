@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { getDisplayNameWithRatings, type StoredParticipant } from '../lib/participantsApi'
 
 type Tab = 'singles' | 'doubles'
