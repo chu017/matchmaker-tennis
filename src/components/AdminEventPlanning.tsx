@@ -41,10 +41,21 @@ interface AdminEventPlanningProps {
   singlesDraw: TournamentDraw | null
   doublesDraw: TournamentDraw | null
   onError: (msg: string | null) => void
+  doublesEnabled?: boolean
 }
 
-export function AdminEventPlanning({ adminKey, singlesDraw, doublesDraw, onError }: AdminEventPlanningProps) {
+export function AdminEventPlanning({
+  adminKey,
+  singlesDraw,
+  doublesDraw,
+  onError,
+  doublesEnabled = true,
+}: AdminEventPlanningProps) {
   const [scheduleTab, setScheduleTab] = useState<'singles' | 'doubles'>('singles')
+
+  useEffect(() => {
+    if (!doublesEnabled && scheduleTab === 'doubles') setScheduleTab('singles')
+  }, [doublesEnabled, scheduleTab])
   const [checklist, setChecklist] = useState<EventPlanChecklistItem[]>(() => mergeChecklist())
   const [courtRentalNotes, setCourtRentalNotes] = useState('')
   const [matchSlots, setMatchSlots] = useState<Record<string, EventPlanMatchSlot>>({})
@@ -180,9 +191,14 @@ export function AdminEventPlanning({ adminKey, singlesDraw, doublesDraw, onError
           </button>
           <button
             type="button"
-            onClick={() => setScheduleTab('doubles')}
+            disabled={!doublesEnabled}
+            onClick={() => doublesEnabled && setScheduleTab('doubles')}
             className={`min-h-[40px] px-3 rounded-full text-sm font-medium ${
-              scheduleTab === 'doubles' ? 'bg-pink-primary text-white' : 'bg-pink-soft/80 text-pink-text-muted'
+              !doublesEnabled
+                ? 'opacity-45 cursor-not-allowed bg-pink-soft/50 text-pink-text-muted'
+                : scheduleTab === 'doubles'
+                  ? 'bg-pink-primary text-white'
+                  : 'bg-pink-soft/80 text-pink-text-muted'
             }`}
           >
             Doubles draw
@@ -264,11 +280,14 @@ export function AdminEventPlanning({ adminKey, singlesDraw, doublesDraw, onError
           <li>
             <strong className="text-pink-text">Later rounds:</strong> Winners need rest — leave buffer between a player’s matches.
           </li>
+          {doublesEnabled && (
+            <li>
+              <strong className="text-pink-text">Doubles vs singles:</strong> If both run the same day, stagger or use separate court blocks to avoid conflicts.
+            </li>
+          )}
           <li>
-            <strong className="text-pink-text">Doubles vs singles:</strong> If both run the same day, stagger or use separate court blocks to avoid conflicts.
-          </li>
-          <li>
-            <strong className="text-pink-text">Check-in:</strong> Arrive 15–30 min before first match; confirm names and format (singles/doubles).
+            <strong className="text-pink-text">Check-in:</strong> Arrive 15–30 min before first match; confirm names
+            {doublesEnabled ? ' and format (singles/doubles)' : ' (singles event)'}.
           </li>
           <li>
             <strong className="text-pink-text">Public draw:</strong> Keep the main app open on a tablet/TV so everyone sees live results.

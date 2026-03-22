@@ -3,6 +3,7 @@ import { Participant } from '../lib/tournament'
 import { TournamentDraw } from '../lib/tournament'
 import { chat } from '../lib/minimaxApi'
 import { getRoundName } from '../lib/tournament'
+import { DOUBLES_ENABLED } from '../lib/featureFlags'
 
 interface TournamentAssistantProps {
   participants: Participant[]
@@ -52,7 +53,7 @@ export function TournamentAssistant({ participants, singlesDraw, doublesDraw }: 
     if (singlesDraw?.matches.length) {
       parts.push('Singles draw: ' + formatDraw(singlesDraw))
     }
-    if (doublesDraw?.matches.length) {
+    if (DOUBLES_ENABLED && doublesDraw?.matches.length) {
       parts.push('Doubles draw: ' + formatDraw(doublesDraw))
     }
     return parts.length ? parts.join('\n') : 'No participants or draw yet.'
@@ -68,8 +69,8 @@ export function TournamentAssistant({ participants, singlesDraw, doublesDraw }: 
     setLoading(true)
 
     try {
-      const systemContent = `You are a helpful tennis tournament assistant for the SF Tennis Matchmaker. Answer questions about the draw, matchups, scheduling, and participants. Be concise and friendly.
-
+      const systemContent = `You are a helpful tennis tournament assistant for SF Tennis Open. Answer questions about the draw, matchups, scheduling, and participants. Be concise and friendly.
+${!DOUBLES_ENABLED ? '\nThis event is singles-only. Do not suggest signing up for doubles.\n' : ''}
 Current tournament state:
 ${buildContext()}`
 

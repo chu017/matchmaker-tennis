@@ -9,6 +9,8 @@ interface DrawTabsProps {
   doublesDraw: TournamentDraw | null
   tab: Tab
   onTabChange: (tab: Tab) => void
+  /** When false, doubles tab is disabled (singles-only event). */
+  doublesEnabled?: boolean
 }
 
 function drawContentKey(draw: TournamentDraw | null): string {
@@ -17,7 +19,13 @@ function drawContentKey(draw: TournamentDraw | null): string {
   return `${draw.rounds}-${ids}`
 }
 
-export function DrawTabs({ singlesDraw, doublesDraw, tab, onTabChange }: DrawTabsProps) {
+export function DrawTabs({
+  singlesDraw,
+  doublesDraw,
+  tab,
+  onTabChange,
+  doublesEnabled = true,
+}: DrawTabsProps) {
   const draw = tab === 'singles' ? singlesDraw : doublesDraw
   const contentKey = useMemo(() => drawContentKey(draw), [draw])
 
@@ -39,11 +47,15 @@ export function DrawTabs({ singlesDraw, doublesDraw, tab, onTabChange }: DrawTab
             Singles ({singlesDraw?.participants.length ?? 0})
           </button>
           <button
-            onClick={() => onTabChange('doubles')}
+            type="button"
+            disabled={!doublesEnabled}
+            onClick={() => doublesEnabled && onTabChange('doubles')}
             className={`min-h-[44px] px-4 py-2.5 rounded-full text-sm font-medium transition-colors touch-manipulation ${
-              tab === 'doubles'
-                ? 'bg-pink-primary text-white'
-                : 'bg-pink-soft/80 text-pink-text-muted hover:bg-pink-muted/60'
+              !doublesEnabled
+                ? 'opacity-45 cursor-not-allowed bg-pink-soft/50 text-pink-text-muted'
+                : tab === 'doubles'
+                  ? 'bg-pink-primary text-white'
+                  : 'bg-pink-soft/80 text-pink-text-muted hover:bg-pink-muted/60'
             }`}
           >
             Doubles ({doublesDraw?.participants.length ?? 0})
@@ -60,7 +72,9 @@ export function DrawTabs({ singlesDraw, doublesDraw, tab, onTabChange }: DrawTab
         ) : (
           <div className="border-2 border-dashed border-pink-muted rounded-xl bg-pink-soft/40 p-8 sm:p-12 text-center">
             <p className="text-pink-text-muted text-lg mb-2">
-              At least 2 {tab} participants needed for the draw
+              {!doublesEnabled && tab === 'doubles'
+                ? 'No doubles draw for this event.'
+                : `At least 2 ${tab} participants needed for the draw`}
             </p>
             <p className="text-pink-text-muted/80 text-sm">
               Share the link — participants sign up and the draw updates live

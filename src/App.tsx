@@ -9,6 +9,7 @@ import { DrawTabs } from './components/DrawTabs'
 import { TournamentAssistant } from './components/TournamentAssistant'
 import { AdminPage } from './components/AdminPage'
 import { checkApiHealth } from './lib/minimaxApi'
+import { DOUBLES_ENABLED } from './lib/featureFlags'
 
 const POLL_INTERVAL_MS = 3000
 
@@ -20,6 +21,10 @@ function App() {
   const [singlesDraw, setSinglesDraw] = useState<TournamentDraw | null>(null)
   const [doublesDraw, setDoublesDraw] = useState<TournamentDraw | null>(null)
   const [gameTab, setGameTab] = useState<GameTab>('singles')
+
+  useEffect(() => {
+    if (!DOUBLES_ENABLED && gameTab === 'doubles') setGameTab('singles')
+  }, [gameTab])
 
   const loadData = useCallback(async () => {
     try {
@@ -100,7 +105,7 @@ function App() {
                   SF TENNIS OPEN
                 </h1>
                 <p className="text-xs sm:text-sm text-pink-text-muted">
-                  by SF WeChat Tennis Group
+                  by sf 🎾 网球约球群
                   <span className="ml-2 inline-flex items-center gap-1">
                     <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-pink-primary animate-pulse" />
                     Live
@@ -127,10 +132,21 @@ function App() {
         <div className="grid lg:grid-cols-3 gap-6 sm:gap-8">
           <div className="lg:col-span-1 space-y-6 order-1">
             <SignUpForm />
-            <ParticipantsList participants={participants} tab={gameTab} onTabChange={setGameTab} />
+            <ParticipantsList
+              participants={participants}
+              tab={gameTab}
+              onTabChange={setGameTab}
+              doublesEnabled={DOUBLES_ENABLED}
+            />
           </div>
           <div className="lg:col-span-2 order-2">
-            <DrawTabs singlesDraw={singlesDraw} doublesDraw={doublesDraw} tab={gameTab} onTabChange={setGameTab} />
+            <DrawTabs
+              singlesDraw={singlesDraw}
+              doublesDraw={doublesDraw}
+              tab={gameTab}
+              onTabChange={setGameTab}
+              doublesEnabled={DOUBLES_ENABLED}
+            />
           </div>
         </div>
       </main>

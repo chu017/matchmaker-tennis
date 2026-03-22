@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { addParticipant } from '../lib/participantsApi'
+import { DOUBLES_ENABLED } from '../lib/featureFlags'
 
 export function SignUpForm() {
   const [name, setName] = useState('')
@@ -53,9 +54,27 @@ export function SignUpForm() {
       <h2 className="font-display text-xl tracking-wider text-pink-text mb-4">
         SIGN UP
       </h2>
-      <p className="text-pink-text-muted text-sm mb-4">
-        Enter your info to join the tournament. The draw updates in real time.
-      </p>
+      <div className="text-pink-text-muted text-sm mb-4 space-y-2">
+        <p>
+          Enter your details to join. The draw on this page updates in real time as people sign up.
+        </p>
+        <p className="font-medium text-pink-text">Draw &amp; bracket rules</p>
+        <ul className="list-disc list-inside space-y-1 text-xs sm:text-sm">
+          <li>
+            <strong>Max 16</strong> players in the singles bracket. If more than 16 register, only the{' '}
+            <strong>top 16 by NTRP</strong> are included in the draw.
+          </li>
+          <li>
+            <strong>Single elimination</strong> with standard tournament seeding: the{' '}
+            <strong>top four seeds</strong> are placed in <strong>four different quarter sections</strong>{' '}
+            so they can’t meet until the semifinals.
+          </li>
+          <li>
+            Ratings are typically <strong>2.5–4.5</strong>. When the field isn’t a full 16,{' '}
+            <strong>byes</strong> are used so the bracket stays balanced.
+          </li>
+        </ul>
+      </div>
       <div className="space-y-3">
         <input
           type="text"
@@ -77,7 +96,7 @@ export function SignUpForm() {
         />
         <div>
           <label className="block text-pink-text-muted text-sm mb-2">Game type</label>
-          <div className="flex gap-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
             <label className="flex items-center gap-2 cursor-pointer min-h-[44px] touch-manipulation">
               <input
                 type="radio"
@@ -88,16 +107,18 @@ export function SignUpForm() {
               />
               <span className="text-pink-text">Singles</span>
             </label>
-            <label className="flex items-center gap-2 cursor-pointer min-h-[44px] touch-manipulation">
-              <input
-                type="radio"
-                name="type"
-                checked={type === 'doubles'}
-                onChange={() => setType('doubles')}
-                className="accent-pink-primary"
-              />
-              <span className="text-pink-text">Doubles</span>
-            </label>
+            {DOUBLES_ENABLED && (
+              <label className="flex items-center gap-2 cursor-pointer min-h-[44px] touch-manipulation">
+                <input
+                  type="radio"
+                  name="type"
+                  checked={type === 'doubles'}
+                  onChange={() => setType('doubles')}
+                  className="accent-pink-primary"
+                />
+                <span className="text-pink-text">Doubles</span>
+              </label>
+            )}
           </div>
         </div>
         {type === 'doubles' && (

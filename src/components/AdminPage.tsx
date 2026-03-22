@@ -20,6 +20,7 @@ import { applyPredictionsToDraw } from '../lib/minimax'
 import { verifyAdminKey, deleteParticipant, setMatchResult, clearMatchResult } from '../lib/adminApi'
 import { AdminEventPlanning } from './AdminEventPlanning'
 import { getDisplayNameWithRatings } from '../lib/participantsApi'
+import { DOUBLES_ENABLED } from '../lib/featureFlags'
 
 const ADMIN_KEY_STORAGE = 'sf-tennis-admin-key'
 
@@ -202,6 +203,10 @@ export function AdminPage({ onBack }: AdminPageProps) {
   }, [verified, loadData])
 
   useEffect(() => {
+    if (!DOUBLES_ENABLED && tab === 'doubles') setTab('singles')
+  }, [tab])
+
+  useEffect(() => {
     const id = verified ? setInterval(loadData, 3000) : 0
     return () => clearInterval(id)
   }, [verified, loadData])
@@ -371,6 +376,7 @@ export function AdminPage({ onBack }: AdminPageProps) {
             singlesDraw={singlesDraw}
             doublesDraw={doublesDraw}
             onError={setError}
+            doublesEnabled={DOUBLES_ENABLED}
           />
         ) : (
           <>
@@ -384,9 +390,15 @@ export function AdminPage({ onBack }: AdminPageProps) {
             Singles
           </button>
           <button
-            onClick={() => setTab('doubles')}
+            type="button"
+            disabled={!DOUBLES_ENABLED}
+            onClick={() => DOUBLES_ENABLED && setTab('doubles')}
             className={`min-h-[44px] px-4 py-2.5 rounded-full text-sm font-medium ${
-              tab === 'doubles' ? 'bg-pink-primary text-white' : 'bg-pink-soft/80 text-pink-text-muted'
+              !DOUBLES_ENABLED
+                ? 'opacity-45 cursor-not-allowed bg-pink-soft/50 text-pink-text-muted'
+                : tab === 'doubles'
+                  ? 'bg-pink-primary text-white'
+                  : 'bg-pink-soft/80 text-pink-text-muted'
             }`}
           >
             Doubles

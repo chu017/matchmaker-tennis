@@ -6,9 +6,15 @@ interface ParticipantsListProps {
   participants: StoredParticipant[]
   tab: Tab
   onTabChange: (tab: Tab) => void
+  doublesEnabled?: boolean
 }
 
-export function ParticipantsList({ participants, tab, onTabChange }: ParticipantsListProps) {
+export function ParticipantsList({
+  participants,
+  tab,
+  onTabChange,
+  doublesEnabled = true,
+}: ParticipantsListProps) {
   const singles = [...participants.filter((p) => p.type === 'singles')].sort((a, b) => b.rating - a.rating)
   const getPairRating = (p: StoredParticipant) =>
     p.type === 'doubles' && p.partnerRating != null ? (p.rating + p.partnerRating) / 2 : p.rating
@@ -32,11 +38,15 @@ export function ParticipantsList({ participants, tab, onTabChange }: Participant
           Singles ({singles.length})
         </button>
         <button
-          onClick={() => onTabChange('doubles')}
+          type="button"
+          disabled={!doublesEnabled}
+          onClick={() => doublesEnabled && onTabChange('doubles')}
           className={`min-h-[44px] px-4 py-2.5 rounded-full text-sm font-medium touch-manipulation transition-all duration-200 ease-out active:scale-[0.98] motion-reduce:active:scale-100 ${
-            tab === 'doubles'
-              ? 'bg-pink-primary text-white shadow-sm'
-              : 'bg-pink-soft/80 text-pink-text-muted hover:bg-pink-muted/60'
+            !doublesEnabled
+              ? 'opacity-45 cursor-not-allowed bg-pink-soft/50 text-pink-text-muted'
+              : tab === 'doubles'
+                ? 'bg-pink-primary text-white shadow-sm'
+                : 'bg-pink-soft/80 text-pink-text-muted hover:bg-pink-muted/60'
           }`}
         >
           Doubles ({doubles.length})
@@ -48,7 +58,8 @@ export function ParticipantsList({ participants, tab, onTabChange }: Participant
         </p>
         <p className="text-pink-text-muted text-xs mb-4">
           # = seed by NTRP (2.5–4.5). Draw: max 16; top 4 seeds in four different quarters; extra spots =
-          byes. Doubles: pair average for seed.
+          byes.
+          {doublesEnabled ? ' Doubles: pair average for seed.' : ' Singles bracket only.'}
         </p>
         <ul className="space-y-2 max-h-64 overflow-y-auto divide-y divide-pink-soft">
           {list.length === 0 ? (
