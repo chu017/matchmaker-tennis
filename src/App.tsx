@@ -216,6 +216,9 @@ function App() {
               </a>
             </span>
           </p>
+          <p className="max-w-xl text-xs sm:text-sm text-pink-text-muted leading-relaxed mt-1">
+            Tennistry 是一款免费的网球匹配 App，自动帮你安排对手和休闲对局。不用在群里问人、也不用到处找，一键就能打球。
+          </p>
         </div>
       </footer>
     </div>
