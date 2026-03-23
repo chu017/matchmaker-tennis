@@ -50,6 +50,7 @@ export async function getParticipants() {
     waiverUserAgent: p.waiverUserAgent ?? null,
     gender: p.gender ?? null,
     partnerGender: p.partnerGender ?? null,
+    waiverLegalName: p.waiverLegalName ?? null,
   }));
 }
 
@@ -74,6 +75,7 @@ export async function addParticipant(participant) {
       participant.partnerGender === 'female' || participant.partnerGender === 'male'
         ? participant.partnerGender
         : null,
+    waiverLegalName: participant.waiverLegalName?.trim() || null,
   };
   data.participants.push(entry);
   write(data);

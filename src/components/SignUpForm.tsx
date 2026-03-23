@@ -32,6 +32,7 @@ export function SignUpForm() {
   const [success, setSuccess] = useState(false)
   const [successDetail, setSuccessDetail] = useState<'draw' | 'waiting' | null>(null)
   const [waiverModalOpen, setWaiverModalOpen] = useState(false)
+  const [waiverLegalName, setWaiverLegalName] = useState('')
   const [waiverAccepted, setWaiverAccepted] = useState(false)
 
   useEffect(() => {
@@ -50,6 +51,10 @@ export function SignUpForm() {
     if (!n) return
     if (!waiverAccepted) {
       setError('Please read the waiver and check the box to agree before signing up.')
+      return
+    }
+    if (!waiverLegalName.trim() || waiverLegalName.trim().length < 2) {
+      setError('Please open the waiver, enter your full legal name, then agree below before signing up.')
       return
     }
     if (gender !== 'male' && gender !== 'female') {
@@ -81,10 +86,12 @@ export function SignUpForm() {
         partnerGender: type === 'doubles' ? (partnerGender as Gender) : undefined,
         waiverAccepted: true,
         waiverVersion: WAIVER_VERSION,
+        waiverLegalName: waiverLegalName.trim(),
       })
       setSuccessDetail(created.bracketStatus === 'waiting' ? 'waiting' : 'draw')
       setSuccess(true)
       setWaiverAccepted(false)
+      setWaiverLegalName('')
       setName('')
       setRating(ntrpOptionValue(DEFAULT_SELF_RATING))
       setPartnerName('')
@@ -309,14 +316,14 @@ export function SignUpForm() {
             <span className="text-sm text-pink-text leading-snug">
               I have read, understood, and agree to the{' '}
               <strong>Waiver and Release of Liability</strong>, including assumption of risk and release of the
-              organizers, sponsors, and venue. I understand my typed name and submission date on the form serve as
-              my electronic signature.
+              organizers, sponsors, and venue. I entered my <strong>full legal name</strong> in the waiver window. My
+              legal name and submission date are recorded as my electronic signature.
             </span>
           </label>
         </div>
         <button
           type="submit"
-          disabled={loading || !waiverAccepted}
+          disabled={loading || !waiverAccepted || !waiverLegalName.trim()}
           className="w-full min-h-[48px] py-3 rounded-full font-display text-lg tracking-wider bg-gradient-to-b from-pink-primary to-[#FF4D8D] text-white hover:opacity-95 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all touch-manipulation"
         >
           {loading ? 'Signing up...' : 'Sign Up'}
@@ -333,7 +340,8 @@ export function SignUpForm() {
       <WaiverModal
         open={waiverModalOpen}
         onClose={() => setWaiverModalOpen(false)}
-        participantName={name}
+        legalName={waiverLegalName}
+        onLegalNameChange={setWaiverLegalName}
       />
     </form>
   )

@@ -35,6 +35,7 @@ function rowToParticipant(row) {
     waiverUserAgent: row.waiver_user_agent ?? null,
     gender: row.gender ?? null,
     partnerGender: row.partner_gender ?? null,
+    waiverLegalName: row.waiver_legal_name ?? null,
   };
 }
 
@@ -66,6 +67,7 @@ export async function addParticipant(participant) {
       participant.partnerGender === 'male' || participant.partnerGender === 'female'
         ? participant.partnerGender
         : null,
+    waiver_legal_name: participant.waiverLegalName?.trim() || null,
   };
   const { data, error } = await getClient().from('participants').insert(row).select().single();
   if (error) throw error;

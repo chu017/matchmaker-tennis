@@ -21,6 +21,8 @@ export interface StoredParticipant {
   waiverVersion?: string | null
   waiverIp?: string | null
   waiverUserAgent?: string | null
+  /** Legal name typed when acknowledging the waiver (may differ from `name`) */
+  waiverLegalName?: string | null
 }
 
 export function getDisplayName(p: StoredParticipant): string {
@@ -61,6 +63,7 @@ export async function addParticipant(data: {
   partnerGender?: 'male' | 'female'
   waiverAccepted: boolean
   waiverVersion: string
+  waiverLegalName: string
 }): Promise<StoredParticipantWithBracketStatus> {
   const res = await fetch('/api/participants', {
     method: 'POST',

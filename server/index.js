@@ -110,8 +110,18 @@ app.get('/api/participants', async (_, res) => {
 
 app.post('/api/participants', async (req, res) => {
   try {
-    const { name, rating, type, partnerName, partnerRating, gender, partnerGender, waiverAccepted, waiverVersion } =
-      req.body;
+    const {
+      name,
+      rating,
+      type,
+      partnerName,
+      partnerRating,
+      gender,
+      partnerGender,
+      waiverAccepted,
+      waiverVersion,
+      waiverLegalName,
+    } = req.body;
     if (!name || typeof name !== 'string' || !name.trim()) {
       return res.status(400).json({ error: 'name is required' });
     }
@@ -140,6 +150,7 @@ app.post('/api/participants', async (req, res) => {
         typeof waiverVersion === 'string' && waiverVersion.trim() ? waiverVersion.trim() : 'v1.0',
       waiverIp: getClientIp(req),
       waiverUserAgent: ua ? ua.slice(0, 2048) : null,
+      waiverLegalName: String(waiverLegalName).trim(),
     });
     const all = await getParticipants();
     const bracketStatus = bracketStatusForParticipant(all, participant.type, participant.id);
