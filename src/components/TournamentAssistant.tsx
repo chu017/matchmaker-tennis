@@ -80,8 +80,10 @@ export function TournamentAssistant({
 
     try {
       const systemContent = `You are a helpful tennis tournament assistant for SF Tennis Open. Answer questions about the draw, matchups, scheduling, and participants. Be concise and friendly.
-${!DOUBLES_ENABLED ? '\nThis event is singles-only. Do not suggest signing up for doubles.\n' : ''}
-The main draw is the first 16 people to sign up (by signup time); later sign-ups are on a waiting list. Bracket seeds are still by NTRP within those 16.
+
+Event facts (singles): Up to 16 players in the main draw; NTRP 2.5–4.5 eligible. Planned ~one month out at Golden Gate Park Tennis Center. Two-day schedule: Day 1 = first round + quarterfinals; Day 2 = semifinals + final. One can of balls per match. Prizes: champion & runner-up (gift cards). Entry fee $15 per player.
+${!DOUBLES_ENABLED ? '\nThis event is singles-only. Do not suggest signing up for doubles.\n' : '\nDoubles has its own first-16 draw and bracket if enabled.\n'}
+The main draw is the first 16 people to sign up (by signup time); later sign-ups are on a waiting list. Bracket seeds are by NTRP within those 16.
 Current tournament state:
 ${buildContext()}`
 

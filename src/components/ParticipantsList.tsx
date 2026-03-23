@@ -63,7 +63,8 @@ export function ParticipantsList({
           {inDraw.length} in main draw · {waiting.length} waiting · {inDraw.length + waiting.length} total · Live
         </p>
         <p className="text-pink-text-muted text-xs">
-          First 16 to sign up are in the bracket. Bracket seed # is by NTRP (top four seeds in different quarters).
+          Up to 16 in the main draw (by signup time). Seeds by NTRP (top four in different quarters). Venue &amp;
+          schedule: see Sign Up — Golden Gate Park Tennis Center; two-day event; $15 entry.
           {doublesEnabled ? ' Doubles: pair average for seed.' : ' Singles only.'}
         </p>
 

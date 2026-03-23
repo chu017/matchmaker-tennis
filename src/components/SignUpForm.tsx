@@ -74,28 +74,50 @@ export function SignUpForm() {
       <h2 className="font-display text-xl tracking-wider text-pink-text mb-4">
         SIGN UP
       </h2>
-      <div className="text-pink-text-muted text-sm mb-4 space-y-2">
+      <div className="text-pink-text-muted text-sm mb-4 space-y-3">
         <p>
           Enter your details to join. The draw on this page updates in real time as people sign up.
         </p>
+        <p>
+          <strong>16-player singles</strong> tournament: open to self-rated players <strong>NTRP 2.5–4.5</strong>.
+          The event is planned for approximately <strong>one month from now</strong> at{' '}
+          <strong>Golden Gate Park Tennis Center</strong>.
+        </p>
+        {DOUBLES_ENABLED && (
+          <p className="text-xs">
+            Doubles uses the same signup order and draw rules in its own bracket (see tabs below).
+          </p>
+        )}
+        <p className="font-medium text-pink-text">Tournament schedule</p>
+        <ul className="list-disc list-inside space-y-1 text-xs sm:text-sm">
+          <li>Two-day format</li>
+          <li>
+            <strong>Day 1:</strong> First round and quarterfinals
+          </li>
+          <li>
+            <strong>Day 2:</strong> Semifinals and final
+          </li>
+          <li>One can of tennis balls provided per match</li>
+          <li>
+            <strong>Prizes:</strong> Champion and runner-up (gift cards)
+          </li>
+          <li>
+            <strong>Entry fee:</strong> $15 per player
+          </li>
+        </ul>
         <p className="font-medium text-pink-text">Draw &amp; bracket rules</p>
         <ul className="list-disc list-inside space-y-1 text-xs sm:text-sm">
           <li>
-            <strong>First 16</strong> people to sign up (by time) are in the <strong>main draw</strong>. Everyone
-            after that is on the <strong>waiting list</strong> until a spot opens (e.g. if someone withdraws).
+            <strong>First 16</strong> to sign up (by time) are in the <strong>main draw</strong> for that event;
+            later sign-ups are on the <strong>waiting list</strong> until a spot opens.
           </li>
           <li>
-            Within the main draw, <strong>bracket placement</strong> still follows <strong>NTRP</strong> (top four
-            seeds in four different quarters).
+            Within the main draw, <strong>bracket placement</strong> follows <strong>NTRP</strong> (top four seeds
+            in four different quarters).
           </li>
           <li>
-            <strong>Single elimination</strong> with standard tournament seeding: the{' '}
-            <strong>top four seeds</strong> are placed in <strong>four different quarter sections</strong>{' '}
-            so they can’t meet until the semifinals.
-          </li>
-          <li>
-            Ratings are typically <strong>2.5–4.5</strong>. When the field isn’t a full 16,{' '}
-            <strong>byes</strong> are used so the bracket stays balanced.
+            <strong>Single elimination</strong> with standard seeding. If fewer than 16 players enter,{' '}
+            <strong>byes</strong> keep the bracket balanced.
           </li>
         </ul>
       </div>
