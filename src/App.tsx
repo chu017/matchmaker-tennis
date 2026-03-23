@@ -11,6 +11,7 @@ import { TournamentAssistant } from './components/TournamentAssistant'
 import { AdminPage } from './components/AdminPage'
 import { checkApiHealth } from './lib/minimaxApi'
 import { DOUBLES_ENABLED } from './lib/featureFlags'
+import { TENNISTRY_APP_STORE_URL, TENNISTRY_LOGO_SRC } from './lib/sponsor'
 
 const POLL_INTERVAL_MS = 3000
 
@@ -94,7 +95,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen relative z-[1]">
+    <div className="min-h-screen relative z-[1] flex flex-col">
       <header className="border-b border-pink-soft bg-pink-soft/80 backdrop-blur-sm sticky top-0 z-10 pt-[env(safe-area-inset-top)] shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-3 sm:py-4 sm:px-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -125,6 +126,27 @@ function App() {
                     Live
                   </span>
                 </p>
+                <p className="mt-2 flex items-center gap-2 text-xs sm:text-sm text-pink-text-muted">
+                  <img
+                    src={TENNISTRY_LOGO_SRC}
+                    alt=""
+                    width={28}
+                    height={28}
+                    className="h-7 w-7 rounded-lg shrink-0 border border-pink-soft/50 bg-white shadow-sm"
+                    aria-hidden
+                  />
+                  <span className="font-medium text-pink-text tracking-wide">
+                    Presented with{' '}
+                    <a
+                      href={TENNISTRY_APP_STORE_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-pink-primary hover:underline"
+                    >
+                      Tennistry
+                    </a>
+                  </span>
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -142,7 +164,7 @@ function App() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-6 sm:py-8 sm:px-6 pb-[max(6rem,env(safe-area-inset-bottom))]">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-6 sm:py-8 sm:px-6 pb-[max(6rem,env(safe-area-inset-bottom))]">
         <div className="grid lg:grid-cols-3 gap-6 sm:gap-8">
           <div className="lg:col-span-1 space-y-6 order-1">
             <SignUpForm />
@@ -170,6 +192,32 @@ function App() {
         doublesDraw={doublesDraw}
         waitingListNote={waitingListContext}
       />
+
+      <footer className="border-t border-pink-soft bg-pink-soft/40 mt-auto py-4 px-4 sm:px-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <div className="max-w-7xl mx-auto flex flex-col items-center justify-center gap-2 text-center text-sm text-pink-text-muted">
+          <p className="flex items-center gap-2">
+            <img
+              src={TENNISTRY_LOGO_SRC}
+              alt=""
+              width={28}
+              height={28}
+              className="h-7 w-7 rounded-lg shrink-0 border border-pink-soft/50 bg-white shadow-sm"
+              aria-hidden
+            />
+            <span className="font-medium text-pink-text tracking-wide">
+              Presented with{' '}
+              <a
+                href={TENNISTRY_APP_STORE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-pink-primary hover:underline"
+              >
+                Tennistry
+              </a>
+            </span>
+          </p>
+        </div>
+      </footer>
     </div>
   )
 }

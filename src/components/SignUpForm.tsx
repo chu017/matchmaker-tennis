@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { addParticipant } from '../lib/participantsApi'
 import { DOUBLES_ENABLED } from '../lib/featureFlags'
+import { TENNISTRY_APP_STORE_URL } from '../lib/sponsor'
 
 /** NTRP levels allowed for this event */
 const NTRP_LEVELS = [2.5, 3.0, 3.5, 4.0, 4.5] as const
@@ -103,6 +104,17 @@ export function SignUpForm() {
           </li>
           <li>
             <strong>Entry fee:</strong> $15 per player
+          </li>
+          <li>
+            <strong>Sponsor:</strong>{' '}
+            <a
+              href={TENNISTRY_APP_STORE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-pink-primary font-medium hover:underline"
+            >
+              Tennistry
+            </a>
           </li>
         </ul>
         <p className="font-medium text-pink-text">Draw &amp; bracket rules</p>
