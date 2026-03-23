@@ -39,6 +39,7 @@ Set `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in `.env` (see **[docs/SUPABA
 
 ## Deploy (free hosting)
 
+- **Production (example):** [sf-tennis-open.onrender.com](https://sf-tennis-open.onrender.com/)
 - **GitHub + hosting:** **[GITHUB.md](./GITHUB.md)** — push to GitHub, then deploy (e.g. Render from your repo).
 - **Platforms & details:** **[DEPLOYMENT.md](./DEPLOYMENT.md)** — Render, GitHub Pages, notes on data and CORS.
 

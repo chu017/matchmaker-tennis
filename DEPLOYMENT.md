@@ -26,7 +26,7 @@ Render hosts both frontend and backend. Free tier: 750 hours/month.
 4. **Environment variables** (Dashboard → Environment):
    - `MINIMAX_API_KEY` = your key from [platform.minimax.io](https://platform.minimax.io)
 
-5. **Deploy** – Render builds and deploys. Your app will be at `https://matchmaker-tennis-xxx.onrender.com`
+5. **Deploy** – Render builds and deploys. Production example: **[SF Tennis Open on Render](https://sf-tennis-open.onrender.com/)** (`https://sf-tennis-open.onrender.com`). New services get a URL like `https://matchmaker-tennis-xxx.onrender.com` until you rename the service.
 
 ### Notes
 

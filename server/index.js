@@ -218,8 +218,14 @@ app.post('/api/admin/event-plan', requireAdmin, async (req, res) => {
 // Serve static frontend in production (after build)
 const distPath = path.join(__dirname, '..', 'dist');
 if (fs.existsSync(path.join(distPath, 'index.html'))) {
-    app.use(express.static(distPath));
-  app.get('*', (_, res) => {
+  app.use(express.static(distPath));
+  // SPA fallback: only for paths without a file extension (e.g. /admin). If a static file
+  // like /tennis.svg is missing from dist, return 404 instead of sending index.html — that
+  // wrong MIME type breaks the browser tab icon and confuses clients.
+  app.get('*', (req, res) => {
+    if (path.extname(req.path)) {
+      return res.status(404).type('text/plain').send('Not found');
+    }
     res.sendFile(path.join(distPath, 'index.html'));
   });
 }
