@@ -11,6 +11,12 @@ export interface StoredParticipant {
   partnerName?: string | null
   partnerRating?: number | null
   createdAt?: string
+  /** Liability waiver — present for new signups after waiver tracking shipped */
+  waiverAccepted?: boolean
+  waiverAcceptedAt?: string | null
+  waiverVersion?: string | null
+  waiverIp?: string | null
+  waiverUserAgent?: string | null
 }
 
 export function getDisplayName(p: StoredParticipant): string {
@@ -47,6 +53,8 @@ export async function addParticipant(data: {
   type: 'singles' | 'doubles'
   partnerName?: string
   partnerRating?: number
+  waiverAccepted: boolean
+  waiverVersion: string
 }): Promise<StoredParticipantWithBracketStatus> {
   const res = await fetch('/api/participants', {
     method: 'POST',

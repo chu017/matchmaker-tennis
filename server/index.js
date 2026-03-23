@@ -23,9 +23,19 @@ import { bracketStatusForParticipant } from './drawPool.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3001;
 const MINIMAX_API_KEY = process.env.MINIMAX_API_KEY;
 const ADMIN_SECRET = process.env.ADMIN_SECRET;
+
+/** Client IP for waiver audit (Render / proxies set X-Forwarded-For). */
+function getClientIp(req) {
+  const xf = req.headers['x-forwarded-for'];
+  if (typeof xf === 'string' && xf.trim()) {
+    return xf.split(',')[0].trim();
+  }
+  return req.ip || req.socket?.remoteAddress || null;
+}
 
 function requireAdmin(req, res, next) {
   const key = req.headers['x-admin-key'] || req.query?.adminKey;
@@ -100,16 +110,26 @@ app.get('/api/participants', async (_, res) => {
 
 app.post('/api/participants', async (req, res) => {
   try {
-    const { name, rating, type, partnerName, partnerRating } = req.body;
+    const { name, rating, type, partnerName, partnerRating, waiverAccepted, waiverVersion } = req.body;
     if (!name || typeof name !== 'string' || !name.trim()) {
       return res.status(400).json({ error: 'name is required' });
     }
+    if (waiverAccepted !== true) {
+      return res.status(400).json({ error: 'Waiver acceptance is required to register' });
+    }
+    const ua = req.get('user-agent');
     const participant = await addParticipant({
       name: name.trim(),
       rating: rating != null ? Number(rating) : 3.0,
       type: type === 'doubles' ? 'doubles' : 'singles',
       partnerName: type === 'doubles' && partnerName ? String(partnerName).trim() : null,
       partnerRating: type === 'doubles' && partnerRating != null ? Number(partnerRating) : null,
+      waiverAccepted: true,
+      waiverAcceptedAt: new Date().toISOString(),
+      waiverVersion:
+        typeof waiverVersion === 'string' && waiverVersion.trim() ? waiverVersion.trim() : 'v1.0',
+      waiverIp: getClientIp(req),
+      waiverUserAgent: ua ? ua.slice(0, 2048) : null,
     });
     const all = await getParticipants();
     const bracketStatus = bracketStatusForParticipant(all, participant.type, participant.id);

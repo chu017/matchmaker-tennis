@@ -43,6 +43,11 @@ export async function getParticipants() {
   return list.map((p, i) => ({
     ...p,
     createdAt: p.createdAt || new Date(epoch + i * 60_000).toISOString(),
+    waiverAccepted: p.waiverAccepted ?? false,
+    waiverAcceptedAt: p.waiverAcceptedAt ?? null,
+    waiverVersion: p.waiverVersion ?? null,
+    waiverIp: p.waiverIp ?? null,
+    waiverUserAgent: p.waiverUserAgent ?? null,
   }));
 }
 
@@ -57,6 +62,11 @@ export async function addParticipant(participant) {
     partnerName: participant.partnerName?.trim() || null,
     partnerRating: participant.partnerRating != null ? participant.partnerRating : null,
     createdAt: new Date().toISOString(),
+    waiverAccepted: participant.waiverAccepted === true,
+    waiverAcceptedAt: participant.waiverAcceptedAt ?? null,
+    waiverVersion: participant.waiverVersion ?? null,
+    waiverIp: participant.waiverIp ?? null,
+    waiverUserAgent: participant.waiverUserAgent ?? null,
   };
   data.participants.push(entry);
   write(data);

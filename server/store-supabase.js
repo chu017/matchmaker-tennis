@@ -28,6 +28,11 @@ function rowToParticipant(row) {
     partnerName: row.partner_name ?? null,
     partnerRating: row.partner_rating != null ? Number(row.partner_rating) : null,
     createdAt: row.created_at,
+    waiverAccepted: row.waiver_accepted ?? false,
+    waiverAcceptedAt: row.waiver_accepted_at ?? null,
+    waiverVersion: row.waiver_version ?? null,
+    waiverIp: row.waiver_ip ?? null,
+    waiverUserAgent: row.waiver_user_agent ?? null,
   };
 }
 
@@ -49,6 +54,11 @@ export async function addParticipant(participant) {
     type: participant.type || 'singles',
     partner_name: participant.partnerName?.trim() || null,
     partner_rating: participant.partnerRating != null ? participant.partnerRating : null,
+    waiver_accepted: participant.waiverAccepted === true,
+    waiver_accepted_at: participant.waiverAcceptedAt ?? null,
+    waiver_version: participant.waiverVersion ?? null,
+    waiver_ip: participant.waiverIp ?? null,
+    waiver_user_agent: participant.waiverUserAgent ?? null,
   };
   const { data, error } = await getClient().from('participants').insert(row).select().single();
   if (error) throw error;

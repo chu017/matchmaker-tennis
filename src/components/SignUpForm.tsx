@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { addParticipant } from '../lib/participantsApi'
 import { DOUBLES_ENABLED } from '../lib/featureFlags'
 import { TENNISTRY_APP_STORE_URL } from '../lib/sponsor'
+import { WAIVER_VERSION } from '../lib/waiverText'
+import { WaiverModal } from './WaiverModal'
 
 /** NTRP levels allowed for this event */
 const NTRP_LEVELS = [2.5, 3.0, 3.5, 4.0, 4.5] as const
@@ -26,6 +28,8 @@ export function SignUpForm() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [successDetail, setSuccessDetail] = useState<'draw' | 'waiting' | null>(null)
+  const [waiverModalOpen, setWaiverModalOpen] = useState(false)
+  const [waiverAccepted, setWaiverAccepted] = useState(false)
 
   useEffect(() => {
     if (success) {
@@ -41,6 +45,10 @@ export function SignUpForm() {
     e.preventDefault()
     const n = name.trim()
     if (!n) return
+    if (!waiverAccepted) {
+      setError('Please read the waiver and check the box to agree before signing up.')
+      return
+    }
     if (type === 'doubles' && !partnerName.trim()) {
       setError('Partner name required for doubles')
       return
@@ -56,9 +64,12 @@ export function SignUpForm() {
         partnerName: type === 'doubles' ? partnerName.trim() : undefined,
         partnerRating:
           type === 'doubles' ? parseFloat(partnerRating) || DEFAULT_SELF_RATING : undefined,
+        waiverAccepted: true,
+        waiverVersion: WAIVER_VERSION,
       })
       setSuccessDetail(created.bracketStatus === 'waiting' ? 'waiting' : 'draw')
       setSuccess(true)
+      setWaiverAccepted(false)
       setName('')
       setRating(ntrpOptionValue(DEFAULT_SELF_RATING))
       setPartnerName('')
@@ -220,9 +231,32 @@ export function SignUpForm() {
             </div>
           </>
         )}
+        <div className="rounded-xl border border-pink-soft bg-pink-soft/25 p-3 sm:p-4 space-y-3">
+          <button
+            type="button"
+            onClick={() => setWaiverModalOpen(true)}
+            className="w-full min-h-[44px] px-3 rounded-xl border border-pink-primary/40 bg-white text-pink-primary text-sm font-medium hover:bg-pink-soft/60 touch-manipulation text-center"
+          >
+            View liability waiver &amp; release
+          </button>
+          <label className="flex gap-3 items-start cursor-pointer touch-manipulation">
+            <input
+              type="checkbox"
+              checked={waiverAccepted}
+              onChange={(e) => setWaiverAccepted(e.target.checked)}
+              className="mt-1 h-5 w-5 shrink-0 accent-pink-primary rounded border-pink-soft"
+            />
+            <span className="text-sm text-pink-text leading-snug">
+              I have read, understood, and agree to the{' '}
+              <strong>Waiver and Release of Liability</strong>, including assumption of risk and release of the
+              organizers, sponsors, and venue. I understand my typed name and submission date on the form serve as
+              my electronic signature.
+            </span>
+          </label>
+        </div>
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !waiverAccepted}
           className="w-full min-h-[48px] py-3 rounded-full font-display text-lg tracking-wider bg-gradient-to-b from-pink-primary to-[#FF4D8D] text-white hover:opacity-95 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all touch-manipulation"
         >
           {loading ? 'Signing up...' : 'Sign Up'}
@@ -236,6 +270,11 @@ export function SignUpForm() {
             : "You're in the main draw! Check the list and bracket below."}
         </p>
       )}
+      <WaiverModal
+        open={waiverModalOpen}
+        onClose={() => setWaiverModalOpen(false)}
+        participantName={name}
+      />
     </form>
   )
 }
