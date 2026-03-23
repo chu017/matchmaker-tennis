@@ -48,6 +48,8 @@ export async function getParticipants() {
     waiverVersion: p.waiverVersion ?? null,
     waiverIp: p.waiverIp ?? null,
     waiverUserAgent: p.waiverUserAgent ?? null,
+    gender: p.gender ?? null,
+    partnerGender: p.partnerGender ?? null,
   }));
 }
 
@@ -67,6 +69,11 @@ export async function addParticipant(participant) {
     waiverVersion: participant.waiverVersion ?? null,
     waiverIp: participant.waiverIp ?? null,
     waiverUserAgent: participant.waiverUserAgent ?? null,
+    gender: participant.gender === 'female' || participant.gender === 'male' ? participant.gender : null,
+    partnerGender:
+      participant.partnerGender === 'female' || participant.partnerGender === 'male'
+        ? participant.partnerGender
+        : null,
   };
   data.participants.push(entry);
   write(data);

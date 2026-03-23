@@ -33,6 +33,8 @@ function rowToParticipant(row) {
     waiverVersion: row.waiver_version ?? null,
     waiverIp: row.waiver_ip ?? null,
     waiverUserAgent: row.waiver_user_agent ?? null,
+    gender: row.gender ?? null,
+    partnerGender: row.partner_gender ?? null,
   };
 }
 
@@ -59,6 +61,11 @@ export async function addParticipant(participant) {
     waiver_version: participant.waiverVersion ?? null,
     waiver_ip: participant.waiverIp ?? null,
     waiver_user_agent: participant.waiverUserAgent ?? null,
+    gender: participant.gender === 'male' || participant.gender === 'female' ? participant.gender : null,
+    partner_gender:
+      participant.partnerGender === 'male' || participant.partnerGender === 'female'
+        ? participant.partnerGender
+        : null,
   };
   const { data, error } = await getClient().from('participants').insert(row).select().single();
   if (error) throw error;

@@ -4,6 +4,7 @@ import { DOUBLES_ENABLED } from '../lib/featureFlags'
 import { TENNISTRY_APP_STORE_URL } from '../lib/sponsor'
 import { WAIVER_VERSION } from '../lib/waiverText'
 import { WaiverModal } from './WaiverModal'
+import { FEMALE_PAIRING_NTRP_ADJUSTMENT, type Gender } from '../lib/gender'
 
 /** NTRP levels allowed for this event */
 const NTRP_LEVELS = [2.5, 3.0, 3.5, 4.0, 4.5] as const
@@ -24,6 +25,8 @@ export function SignUpForm() {
   const [type, setType] = useState<'singles' | 'doubles'>('singles')
   const [partnerName, setPartnerName] = useState('')
   const [partnerRating, setPartnerRating] = useState(() => ntrpOptionValue(DEFAULT_SELF_RATING))
+  const [gender, setGender] = useState<'' | Gender>('')
+  const [partnerGender, setPartnerGender] = useState<'' | Gender>('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -49,9 +52,19 @@ export function SignUpForm() {
       setError('Please read the waiver and check the box to agree before signing up.')
       return
     }
-    if (type === 'doubles' && !partnerName.trim()) {
-      setError('Partner name required for doubles')
+    if (gender !== 'male' && gender !== 'female') {
+      setError('Please select your gender')
       return
+    }
+    if (type === 'doubles') {
+      if (!partnerName.trim()) {
+        setError('Partner name required for doubles')
+        return
+      }
+      if (partnerGender !== 'male' && partnerGender !== 'female') {
+        setError("Please select your partner's gender")
+        return
+      }
     }
     setLoading(true)
     setError(null)
@@ -61,9 +74,11 @@ export function SignUpForm() {
         name: n,
         rating: parseFloat(rating) || DEFAULT_SELF_RATING,
         type,
+        gender: gender as Gender,
         partnerName: type === 'doubles' ? partnerName.trim() : undefined,
         partnerRating:
           type === 'doubles' ? parseFloat(partnerRating) || DEFAULT_SELF_RATING : undefined,
+        partnerGender: type === 'doubles' ? (partnerGender as Gender) : undefined,
         waiverAccepted: true,
         waiverVersion: WAIVER_VERSION,
       })
@@ -74,6 +89,8 @@ export function SignUpForm() {
       setRating(ntrpOptionValue(DEFAULT_SELF_RATING))
       setPartnerName('')
       setPartnerRating(ntrpOptionValue(DEFAULT_SELF_RATING))
+      setGender('')
+      setPartnerGender('')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Sign up failed')
     } finally {
@@ -137,6 +154,13 @@ export function SignUpForm() {
           <li>
             Within the main draw, <strong>bracket placement</strong> follows <strong>NTRP</strong> (top four seeds
             in four different quarters).
+            {DOUBLES_ENABLED && (
+              <>
+                {' '}
+                <strong>Doubles:</strong> for pair strength, female NTRP is treated as{' '}
+                {FEMALE_PAIRING_NTRP_ADJUSTMENT} lower than male at the same self-reported level (pairing fairness).
+              </>
+            )}
           </li>
           <li>
             <strong>Single elimination</strong> with standard seeding. If fewer than 16 players enter,{' '}
@@ -153,6 +177,24 @@ export function SignUpForm() {
           required
           className="w-full min-h-[44px] px-4 py-3 rounded-xl bg-pink-soft/60 border-0 text-pink-text placeholder-pink-text-muted focus:outline-none focus:ring-2 focus:ring-pink-primary/40 touch-manipulation"
         />
+        <div>
+          <label htmlFor="signup-gender" className="block text-pink-text-muted text-sm mb-1.5">
+            Gender
+          </label>
+          <select
+            id="signup-gender"
+            value={gender}
+            onChange={(e) => setGender(e.target.value as '' | Gender)}
+            required
+            className={selectClassName}
+          >
+            <option value="" disabled>
+              Select…
+            </option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+        </div>
         <div>
           <label htmlFor="signup-self-rating" className="block text-pink-text-muted text-sm mb-1.5">
             Self rating (NTRP)
@@ -211,6 +253,24 @@ export function SignUpForm() {
               required={type === 'doubles'}
               className="w-full min-h-[44px] px-4 py-3 rounded-xl bg-pink-soft/60 border-0 text-pink-text placeholder-pink-text-muted focus:outline-none focus:ring-2 focus:ring-pink-primary/40 touch-manipulation"
             />
+            <div>
+              <label htmlFor="signup-partner-gender" className="block text-pink-text-muted text-sm mb-1.5">
+                Partner gender
+              </label>
+              <select
+                id="signup-partner-gender"
+                value={partnerGender}
+                onChange={(e) => setPartnerGender(e.target.value as '' | Gender)}
+                required={type === 'doubles'}
+                className={selectClassName}
+              >
+                <option value="" disabled>
+                  Select…
+                </option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
+            </div>
             <div>
               <label htmlFor="signup-partner-rating" className="block text-pink-text-muted text-sm mb-1.5">
                 Partner rating (NTRP)

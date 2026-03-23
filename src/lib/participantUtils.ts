@@ -4,11 +4,17 @@
 import type { Participant } from './tournament'
 import type { StoredParticipant } from './participantsApi'
 import { getDisplayName } from './participantsApi'
+import { effectiveNtrpForPairing } from './gender'
 
-/** Pair rating for doubles: average of both players' ratings */
+/**
+ * Sorting strength for the draw: singles use raw NTRP; doubles use average of each side’s
+ * **effective** NTRP (female = stored − 0.5 vs male baseline for pairing fairness).
+ */
 function getPairRating(p: StoredParticipant): number {
   if (p.type !== 'doubles' || p.partnerRating == null) return p.rating
-  return (p.rating + p.partnerRating) / 2
+  const r1 = effectiveNtrpForPairing(p.rating, p.gender ?? undefined)
+  const r2 = effectiveNtrpForPairing(p.partnerRating, p.partnerGender ?? undefined)
+  return (r1 + r2) / 2
 }
 
 /**

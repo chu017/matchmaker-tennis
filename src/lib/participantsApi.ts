@@ -8,8 +8,12 @@ export interface StoredParticipant {
   name: string
   rating: number
   type: 'singles' | 'doubles'
+  /** Primary player; optional on legacy rows (treated as male for pairing math) */
+  gender?: 'male' | 'female' | null
   partnerName?: string | null
   partnerRating?: number | null
+  /** Doubles partner; optional on legacy rows */
+  partnerGender?: 'male' | 'female' | null
   createdAt?: string
   /** Liability waiver — present for new signups after waiver tracking shipped */
   waiverAccepted?: boolean
@@ -51,8 +55,10 @@ export async function addParticipant(data: {
   name: string
   rating?: number
   type: 'singles' | 'doubles'
+  gender: 'male' | 'female'
   partnerName?: string
   partnerRating?: number
+  partnerGender?: 'male' | 'female'
   waiverAccepted: boolean
   waiverVersion: string
 }): Promise<StoredParticipantWithBracketStatus> {

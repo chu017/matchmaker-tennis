@@ -110,9 +110,17 @@ app.get('/api/participants', async (_, res) => {
 
 app.post('/api/participants', async (req, res) => {
   try {
-    const { name, rating, type, partnerName, partnerRating, waiverAccepted, waiverVersion } = req.body;
+    const { name, rating, type, partnerName, partnerRating, gender, partnerGender, waiverAccepted, waiverVersion } =
+      req.body;
     if (!name || typeof name !== 'string' || !name.trim()) {
       return res.status(400).json({ error: 'name is required' });
+    }
+    if (gender !== 'male' && gender !== 'female') {
+      return res.status(400).json({ error: 'gender (male or female) is required' });
+    }
+    const evtType = type === 'doubles' ? 'doubles' : 'singles';
+    if (evtType === 'doubles' && partnerGender !== 'male' && partnerGender !== 'female') {
+      return res.status(400).json({ error: 'partnerGender (male or female) is required for doubles' });
     }
     if (waiverAccepted !== true) {
       return res.status(400).json({ error: 'Waiver acceptance is required to register' });
@@ -121,9 +129,11 @@ app.post('/api/participants', async (req, res) => {
     const participant = await addParticipant({
       name: name.trim(),
       rating: rating != null ? Number(rating) : 3.0,
-      type: type === 'doubles' ? 'doubles' : 'singles',
-      partnerName: type === 'doubles' && partnerName ? String(partnerName).trim() : null,
-      partnerRating: type === 'doubles' && partnerRating != null ? Number(partnerRating) : null,
+      type: evtType,
+      gender,
+      partnerName: evtType === 'doubles' && partnerName ? String(partnerName).trim() : null,
+      partnerRating: evtType === 'doubles' && partnerRating != null ? Number(partnerRating) : null,
+      partnerGender: evtType === 'doubles' ? partnerGender : null,
       waiverAccepted: true,
       waiverAcceptedAt: new Date().toISOString(),
       waiverVersion:
