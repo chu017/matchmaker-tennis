@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { addParticipant } from '../lib/participantsApi'
 import { DOUBLES_ENABLED } from '../lib/featureFlags'
 import { TENNISTRY_APP_STORE_URL } from '../lib/sponsor'
@@ -32,8 +32,28 @@ export function SignUpForm() {
   const [success, setSuccess] = useState(false)
   const [successDetail, setSuccessDetail] = useState<'draw' | 'waiting' | null>(null)
   const [waiverModalOpen, setWaiverModalOpen] = useState(false)
+  const [waiverModalOpened, setWaiverModalOpened] = useState(false)
   const [waiverLegalName, setWaiverLegalName] = useState('')
   const [waiverAccepted, setWaiverAccepted] = useState(false)
+
+  const signUpDisabled = loading || !waiverAccepted || !waiverLegalName.trim()
+
+  /** Shown on Sign Up + waiver area when waiver flow is incomplete (cursor-help + native title). */
+  const signUpDisabledTooltip = useMemo(() => {
+    if (loading) return undefined
+    if (!waiverLegalName.trim()) {
+      if (!waiverModalOpened) {
+        return 'To sign up: (1) Tap “View liability waiver” → (2) Enter your full legal name and close the window → (3) Check the agreement box below.'
+      }
+      return 'Enter your full legal name in the waiver (at least 2 characters), close the window, then check the agreement box below.'
+    }
+    if (!waiverAccepted) {
+      return 'Check the agreement box below to confirm you have read and accept the waiver.'
+    }
+    return undefined
+  }, [loading, waiverLegalName, waiverModalOpened, waiverAccepted])
+
+  const showWaiverHelpCursor = Boolean(signUpDisabledTooltip)
 
   useEffect(() => {
     if (success) {
@@ -92,6 +112,7 @@ export function SignUpForm() {
       setSuccess(true)
       setWaiverAccepted(false)
       setWaiverLegalName('')
+      setWaiverModalOpened(false)
       setName('')
       setRating(ntrpOptionValue(DEFAULT_SELF_RATING))
       setPartnerName('')
@@ -298,11 +319,22 @@ export function SignUpForm() {
             </div>
           </>
         )}
-        <div className="rounded-xl border border-pink-soft bg-pink-soft/25 p-3 sm:p-4 space-y-3">
+        <div
+          className={`rounded-xl border border-pink-soft bg-pink-soft/25 p-3 sm:p-4 space-y-3 ${
+            showWaiverHelpCursor ? 'cursor-help' : ''
+          }`}
+          title={showWaiverHelpCursor ? signUpDisabledTooltip : undefined}
+        >
           <button
             type="button"
-            onClick={() => setWaiverModalOpen(true)}
-            className="w-full min-h-[44px] px-3 rounded-xl border border-pink-primary/40 bg-white text-pink-primary text-sm font-medium hover:bg-pink-soft/60 touch-manipulation text-center"
+            onClick={() => {
+              setWaiverModalOpened(true)
+              setWaiverModalOpen(true)
+            }}
+            title={!waiverLegalName.trim() ? signUpDisabledTooltip : undefined}
+            className={`w-full min-h-[44px] px-3 rounded-xl border border-pink-primary/40 bg-white text-pink-primary text-sm font-medium hover:bg-pink-soft/60 touch-manipulation text-center ${
+              !waiverLegalName.trim() && signUpDisabledTooltip ? 'cursor-help' : ''
+            }`}
           >
             View liability waiver &amp; release
           </button>
@@ -321,13 +353,26 @@ export function SignUpForm() {
             </span>
           </label>
         </div>
-        <button
-          type="submit"
-          disabled={loading || !waiverAccepted || !waiverLegalName.trim()}
-          className="w-full min-h-[48px] py-3 rounded-full font-display text-lg tracking-wider bg-gradient-to-b from-pink-primary to-[#FF4D8D] text-white hover:opacity-95 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all touch-manipulation"
-        >
-          {loading ? 'Signing up...' : 'Sign Up'}
-        </button>
+        <span className="block w-full" title={signUpDisabledTooltip}>
+          <button
+            type="submit"
+            disabled={signUpDisabled}
+            aria-describedby={signUpDisabledTooltip ? 'signup-submit-hint' : undefined}
+            className="w-full min-h-[48px] py-3 rounded-full font-display text-lg tracking-wider bg-gradient-to-b from-pink-primary to-[#FF4D8D] text-white hover:opacity-95 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all touch-manipulation"
+          >
+            {loading ? 'Signing up...' : 'Sign Up'}
+          </button>
+        </span>
+        {signUpDisabledTooltip && (
+          <>
+            <p id="signup-submit-hint" className="sr-only">
+              {signUpDisabledTooltip}
+            </p>
+            <p className="mt-2 text-center text-xs text-pink-text-muted lg:hidden" aria-hidden="true">
+              {signUpDisabledTooltip}
+            </p>
+          </>
+        )}
       </div>
       {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
       {success && (
