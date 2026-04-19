@@ -16,7 +16,6 @@ import {
   type Participant,
 } from '../lib/tournament'
 import { formatParticipantDrawInline } from '../lib/drawDisplay'
-import { applyPredictionsToDraw } from '../lib/minimax'
 import {
   verifyAdminKey,
   deleteParticipant,
@@ -287,9 +286,7 @@ export function AdminPage({ onBack }: AdminPageProps) {
     const singlesInDraw = splitPoolBySignupOrder(effectiveParticipants, 'singles').inDraw
     if (singlesInDraw.length < 2) return null
     const sp = toTournamentParticipants(singlesInDraw)
-    let draw = applyMatchResults(generateDraw(sp), matchResults.singles)
-    draw = applyPredictionsToDraw(draw)
-    return draw
+    return applyMatchResults(generateDraw(sp), matchResults.singles)
   }, [effectiveParticipants, matchResults.singles])
 
   const doublesDraw = useMemo(() => {
@@ -297,9 +294,7 @@ export function AdminPage({ onBack }: AdminPageProps) {
     const doublesInDraw = splitPoolBySignupOrder(effectiveParticipants, 'doubles').inDraw
     if (doublesInDraw.length < 2) return null
     const dp = toTournamentParticipants(doublesInDraw)
-    let draw = applyMatchResults(generateDraw(dp), matchResults.doubles)
-    draw = applyPredictionsToDraw(draw)
-    return draw
+    return applyMatchResults(generateDraw(dp), matchResults.doubles)
   }, [effectiveParticipants, matchResults.doubles])
 
   const mergeParticipantDraft = (id: string, partial: Partial<StoredParticipant>) => {

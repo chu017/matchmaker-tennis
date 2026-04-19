@@ -268,48 +268,24 @@ export function BracketView({ draw, showTitle = true }: BracketViewProps) {
 
       <p className="text-pink-text-muted text-sm mt-4">
         {draw.participants.length} in main draw (first 16 sign-ups) • {draw.rounds} rounds • Single elimination
-        {draw.matches.some((m) => m.predictedWinner) && (
-          <span className="ml-2 text-pink-primary">• Winning predictions</span>
-        )}
       </p>
     </div>
   )
 }
 
-function PlayerSlot({
-  player,
-  isWinner,
-  isPredicted,
-  winProbPercent,
-  showProb,
-}: {
-  player: Participant | null
-  isWinner: boolean
-  isPredicted: boolean
-  winProbPercent: number | null
-  showProb: boolean
-}) {
+function PlayerSlot({ player, isWinner }: { player: Participant | null; isWinner: boolean }) {
   const label = formatParticipantDrawInline(player)
 
   return (
     <div
       className={`px-3 py-2 text-sm font-medium flex justify-between items-center gap-2 min-h-[2.75rem] shrink-0 ${
-        isWinner
-          ? 'text-pink-primary bg-pink-soft font-semibold'
-          : isPredicted
-            ? 'text-pink-primary bg-pink-soft/60'
-            : 'text-pink-text'
+        isWinner ? 'text-pink-primary bg-pink-soft font-semibold' : 'text-pink-text'
       }`}
     >
       <span className="min-w-0 flex-1 leading-snug break-words">
         {label}
         {isWinner && <span className="ml-1 text-xs">✓</span>}
       </span>
-      {showProb && winProbPercent != null && (
-        <span className="text-pink-primary text-xs font-semibold shrink-0">
-          {winProbPercent.toFixed(0)}%
-        </span>
-      )}
     </div>
   )
 }
@@ -325,9 +301,6 @@ function MatchCard({
   treeSlot?: boolean
 }) {
   const isBye = match.isBye
-  const predWinner = match.predictedWinner
-  const winProb = match.predictedWinProb
-  const showProb = winProb != null && !isBye && !match.score
 
   return (
     <div
@@ -355,14 +328,6 @@ function MatchCard({
             match.player1 != null &&
             match.winner.id === match.player1.id
           }
-          isPredicted={
-            match.player1 != null &&
-            predWinner != null &&
-            predWinner.id === match.player1.id &&
-            match.winner?.id !== match.player1.id
-          }
-          winProbPercent={showProb ? winProb * 100 : null}
-          showProb={showProb}
         />
         <PlayerSlot
           player={match.player2}
@@ -371,14 +336,6 @@ function MatchCard({
             match.player2 != null &&
             match.winner.id === match.player2.id
           }
-          isPredicted={
-            match.player2 != null &&
-            predWinner != null &&
-            predWinner.id === match.player2.id &&
-            match.winner?.id !== match.player2.id
-          }
-          winProbPercent={showProb ? (1 - winProb) * 100 : null}
-          showProb={showProb}
         />
       </div>
     </div>

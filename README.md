@@ -5,7 +5,7 @@ A web app to create and manage tennis tournament draws for San Francisco tournam
 ## User Journey
 
 1. **Share the URL** — Send the link to potential participants
-2. **Self-registration** — Participants enter their name, rating (Elo), and format (singles or doubles)
+2. **Self-registration** — Participants enter their name, rating (NTRP), and format (singles or doubles)
 3. **Live updates** — The system stores signups and automatically generates the draw
 4. **Everyone sees** — New visitors see all signed-up participants and the live draw
 
@@ -13,8 +13,7 @@ A web app to create and manage tennis tournament draws for San Francisco tournam
 
 - **Self-registration** — Name, rating, singles/doubles (with partner name for doubles)
 - **Live draw** — Auto-generated from participants, updates every few seconds
-- **Automatic seeding** — By rating (higher rating = better seed)
-- **Match predictions** — Elo-based win probabilities
+- **Seeding & bracket** — NTRP order; R1 similar ratings; later rounds mix across bands (balanced columns)
 - **Tournament assistant** — Chat with AI about the draw (requires MiniMax API key)
 - **Copy link** — Share the tournament URL easily
 
@@ -55,7 +54,7 @@ npm run preview
 1. Share the link with participants
 2. Each participant signs up with name, rating, and format (singles/doubles)
 3. The draw auto-generates and updates live when 2+ participants have signed up
-4. Seeding is by rating (higher = better seed)
+4. Seeding is by NTRP; round 1 similar ratings; round 2+ mixes winners across parts of the field
 5. Everyone visiting the URL sees the same live participants list and draw
 
 ---

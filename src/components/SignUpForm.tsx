@@ -180,8 +180,9 @@ export function SignUpForm() {
             later sign-ups are on the <strong>waiting list</strong> until a spot opens.
           </li>
           <li>
-            Within the main draw, <strong>bracket placement</strong> follows <strong>NTRP</strong> (top four seeds
-            in four different quarters).
+            Within the main draw, <strong>round 1</strong> pairs <strong>similar NTRP</strong> (adjacent seeds).{' '}
+            <strong>Round 2</strong> then crosses winners from different parts of the field so the draw is more mixed;
+            the two sides of the bracket are kept closer in average strength.
             {DOUBLES_ENABLED && (
               <>
                 {' '}
@@ -191,8 +192,8 @@ export function SignUpForm() {
             )}
           </li>
           <li>
-            <strong>Single elimination</strong> with standard seeding. If fewer than 16 players enter,{' '}
-            <strong>byes</strong> keep the bracket balanced.
+            <strong>Single elimination.</strong> If fewer than 16 players enter, <strong>byes</strong> keep the bracket
+            balanced.
           </li>
         </ul>
       </div>

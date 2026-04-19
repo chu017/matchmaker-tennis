@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { generateDraw, TournamentDraw, applyMatchResults } from './lib/tournament'
-import { applyPredictionsToDraw } from './lib/minimax'
 import { fetchParticipants, fetchMatchResults, type StoredParticipant } from './lib/participantsApi'
 import { toTournamentParticipants } from './lib/participantUtils'
 import { splitPoolBySignupOrder } from './lib/drawPool'
@@ -38,16 +37,14 @@ function App() {
 
       if (singlesInDraw.length >= 2) {
         const sp = toTournamentParticipants(singlesInDraw)
-        let draw = applyMatchResults(generateDraw(sp), results.singles)
-        draw = applyPredictionsToDraw(draw)
+        const draw = applyMatchResults(generateDraw(sp), results.singles)
         setSinglesDraw(draw)
       } else {
         setSinglesDraw(null)
       }
       if (doublesInDraw.length >= 2) {
         const dp = toTournamentParticipants(doublesInDraw)
-        let draw = applyMatchResults(generateDraw(dp), results.doubles)
-        draw = applyPredictionsToDraw(draw)
+        const draw = applyMatchResults(generateDraw(dp), results.doubles)
         setDoublesDraw(draw)
       } else {
         setDoublesDraw(null)

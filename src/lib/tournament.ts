@@ -5,20 +5,18 @@
  * (by stored signup time) enter the draw; later sign-ups are on the **waiting list** (outside
  * the bracket until someone withdraws and order advances).
  *
- * **Seeding (within the 16):** After the field is fixed, bracket lines use NTRP — sort by rating
- * descending; ties broken by seed number (lower = stronger).
+ * **Seeding (within the 16):** After the field is fixed, players are ordered by NTRP (and optional
+ * admin seed rank); ties broken by seed number. Seed 1 = strongest.
  *
- * **Fair bracket:** Uses standard ITF-style single-elimination positions for 2/4/8/16 draws.
- * That spreads strength so:
- * - Seeds 1 vs 2 can only meet in the final (16 draw).
- * - The **top 4 by rating** land in **four different quarterfinal quadrants** (1/4 区).
- * - Weaker players are paired with stronger ones early (1 vs 16, 2 vs 15, … when the field is full).
+ * **Community-style round 1:** Each match pairs **adjacent seeds** (similar NTRP): 1 vs 2, 3 vs 4, …
+ * **Round 2+:** Match order is **shuffled** so winners from different parts of the list meet (e.g. pair
+ * (1,2) feeds the same quarter as pair (5,6), not only (3,4)). **Alternating** which column gets the
+ * stronger player keeps the two sides of the bracket from one column being much higher-rated than the other.
  *
  * **Bracket depth:** If **8 or fewer** entrants, the draw uses an **8-player** bracket (3 rounds
  * to the final). If **more than 8** (up to 16), a **16-player** bracket (4 rounds to the final).
  *
- * **Byes:** Empty slots produce byes; the way seeds map to lines, higher seeds tend to receive
- * byes when the field is not full.
+ * **Byes:** Empty bracket slots produce byes (one player advances without an opponent).
  */
 
 /** Hard cap for singles/doubles draw size */
@@ -28,7 +26,7 @@ export interface Participant {
   id: string;
   name: string;
   seed?: number; // 1 = top seed, 2 = second seed, etc.
-  rating?: number; // Elo-style rating for minimax prediction (default: derived from seed)
+  rating?: number; // NTRP-derived strength for display / future use
   /** When set (>=1), bracket seeding uses this rank before NTRP (see orderParticipantsForDraw). */
   adminSeedRank?: number | null;
 }
@@ -44,10 +42,6 @@ export interface Match {
   /** Game score (e.g. "6-4, 6-3") when result is recorded */
   score?: string | null;
   isBye?: boolean;
-  /** Minimax model: P(player1 wins) */
-  predictedWinProb?: number;
-  /** Minimax model: predicted winner */
-  predictedWinner?: Participant | null;
 }
 
 export interface TournamentDraw {
@@ -66,33 +60,7 @@ function nextPowerOf2(n: number): number {
 }
 
 /**
- * Standard single-elimination line positions.
- * First round pairs slot `i` with slot `i + size/2` (see generateFirstRoundMatches).
- * Index `s` = tournament seed (1-based) → bracket slot index (0-based).
- *
- * For size 16 this is the usual 1v16, 8v9, 5v12, … ordering so seeds 1–4 occupy
- * four different quarterfinal sections.
- */
-const SEED_TO_SLOT_BY_SIZE: Record<number, number[]> = {
-  2: [0, 1],
-  // 1v4, 2v3
-  4: [0, 1, 3, 2],
-  // 1v8, 4v5, 3v6, 2v7
-  8: [0, 3, 2, 1, 5, 4, 6, 7],
-  // 1v16, 8v9, 5v12, 4v13, 3v14, 6v11, 7v10, 2v15
-  16: [0, 7, 4, 3, 2, 5, 6, 1, 9, 14, 13, 12, 11, 10, 15, 8],
-}
-
-function getSeedToSlotTable(bracketSize: number): number[] {
-  const t = SEED_TO_SLOT_BY_SIZE[bracketSize]
-  if (!t) {
-    throw new Error(`Unsupported bracket size: ${bracketSize}`)
-  }
-  return t
-}
-
-/**
- * Sort strongest first for draw entry, then place seeds 1..n on standard lines.
+ * Sort strongest first for draw entry, then place seeds 1..n for similar-rating R1 pairing.
  */
 function orderParticipantsForDraw(participants: Participant[]): Participant[] {
   return [...participants].sort((a, b) => {
@@ -112,15 +80,61 @@ function orderParticipantsForDraw(participants: Participant[]): Participant[] {
   })
 }
 
-function seedBracketStandard(participants: Participant[], bracketSize: number): (Participant | null)[] {
+/**
+ * Permute pair indices so round-2 merges **non-consecutive** adjacent-seed pairs (e.g. 0,2,4,6 then 1,3,5,7),
+ * which mixes rating tiers after similar-NTRP round 1.
+ */
+function pairIndexPermutationForMixedRound2(half: number): number[] {
+  if (half <= 1) return [0]
+  const mid = Math.floor(half / 2)
+  const perm: number[] = []
+  for (let i = 0; i < mid; i++) perm.push(i * 2)
+  for (let i = 0; i < half - mid; i++) perm.push(i * 2 + 1)
+  return perm
+}
+
+/**
+ * Adjacent-seed pairs (similar NTRP in R1), permuted for **mixed round-2 paths**, with **alternating**
+ * strong/weak in top vs bottom column so the two bracket columns stay closer in average strength.
+ */
+function seedBracketSimilarRating(participants: Participant[], bracketSize: number): (Participant | null)[] {
   const slots: (Participant | null)[] = new Array(bracketSize).fill(null)
-  const table = getSeedToSlotTable(bracketSize)
+  const half = bracketSize / 2
   const n = participants.length
-  for (let s = 0; s < n; s++) {
-    const slotIndex = table[s]
-    if (slotIndex === undefined) break
-    slots[slotIndex] = participants[s]
+
+  type Pair = readonly [Participant | null, Participant | null]
+  const pairList: Pair[] = []
+  for (let i = 0; i < half; i++) {
+    const a = 2 * i < n ? participants[2 * i] : null
+    const b = 2 * i + 1 < n ? participants[2 * i + 1] : null
+    pairList.push([a, b])
   }
+
+  const perm = pairIndexPermutationForMixedRound2(half)
+
+  for (let m = 0; m < half; m++) {
+    const pIdx = perm[m]
+    const [a, b] = pairList[pIdx]
+    if (!a && !b) continue
+    if (a && !b) {
+      slots[m] = a
+      continue
+    }
+    if (!a && b) {
+      slots[m + half] = b
+      continue
+    }
+    const stronger = a!
+    const weaker = b!
+    if (m % 2 === 0) {
+      slots[m] = stronger
+      slots[m + half] = weaker
+    } else {
+      slots[m] = weaker
+      slots[m + half] = stronger
+    }
+  }
+
   return slots
 }
 
@@ -154,7 +168,7 @@ function generateFirstRoundMatches(
 }
 
 /**
- * Generate the complete tournament draw (max {@link MAX_DRAW_PLAYERS}, standard seeding).
+ * Generate the complete tournament draw (max {@link MAX_DRAW_PLAYERS}, similar-rating round 1).
  */
 export function generateDraw(participants: Participant[]): TournamentDraw {
   if (participants.length < 2) {
@@ -175,7 +189,7 @@ export function generateDraw(participants: Participant[]): TournamentDraw {
   const bracketSize =
     n <= 8 ? 8 : Math.min(MAX_DRAW_PLAYERS, nextPowerOf2(n))
   const rounds = Math.log2(bracketSize)
-  const seededSlots = seedBracketStandard(inDraw, bracketSize)
+  const seededSlots = seedBracketSimilarRating(inDraw, bracketSize)
   const firstRoundMatches = generateFirstRoundMatches(seededSlots, 'r1')
 
   // Build all rounds (quarters, semis, final)
