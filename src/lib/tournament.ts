@@ -29,6 +29,8 @@ export interface Participant {
   name: string;
   seed?: number; // 1 = top seed, 2 = second seed, etc.
   rating?: number; // Elo-style rating for minimax prediction (default: derived from seed)
+  /** When set (>=1), bracket seeding uses this rank before NTRP (see orderParticipantsForDraw). */
+  adminSeedRank?: number | null;
 }
 
 export interface Match {
@@ -94,6 +96,13 @@ function getSeedToSlotTable(bracketSize: number): number[] {
  */
 function orderParticipantsForDraw(participants: Participant[]): Participant[] {
   return [...participants].sort((a, b) => {
+    const ar = a.adminSeedRank
+    const br = b.adminSeedRank
+    const aHas = ar != null && ar > 0
+    const bHas = br != null && br > 0
+    if (aHas && bHas && ar !== br) return ar - br
+    if (aHas && !bHas) return -1
+    if (!aHas && bHas) return 1
     const ra = a.rating ?? -Infinity
     const rb = b.rating ?? -Infinity
     if (rb !== ra) return rb - ra
@@ -379,4 +388,19 @@ export function getRoundName(round: number, totalRounds?: number): string {
   if (round === tr - 2) return 'Quarterfinals'
   if (round === 1) return 'First Round'
   return `Round ${round}`
+}
+
+/** Sort matches for admin lists using optional per-match display order (lower = earlier). */
+export function sortMatchesByDisplayOrder<T extends { id: string; position: number }>(
+  matches: T[],
+  orderMap: Record<string, number>,
+): T[] {
+  return [...matches].sort((a, b) => {
+    const oa = orderMap[a.id]
+    const ob = orderMap[b.id]
+    const va = oa !== undefined && Number.isFinite(oa) ? Number(oa) : a.position
+    const vb = ob !== undefined && Number.isFinite(ob) ? Number(ob) : b.position
+    if (va !== vb) return va - vb
+    return a.position - b.position
+  })
 }

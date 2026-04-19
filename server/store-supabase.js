@@ -36,6 +36,14 @@ function rowToParticipant(row) {
     gender: row.gender ?? null,
     partnerGender: row.partner_gender ?? null,
     waiverLegalName: row.waiver_legal_name ?? null,
+    adminSeedRank:
+      row.admin_seed_rank != null && Number.isFinite(Number(row.admin_seed_rank))
+        ? Number(row.admin_seed_rank)
+        : null,
+    adminBracketSlot:
+      row.admin_bracket_slot === 'draw' || row.admin_bracket_slot === 'waiting'
+        ? row.admin_bracket_slot
+        : null,
   };
 }
 
@@ -84,6 +92,27 @@ export async function deleteParticipant(id) {
   if (error) throw error;
   if (!data) return null;
   return rowToParticipant(data);
+}
+
+export async function updateParticipant(id, patch) {
+  const row = {};
+  if (patch.name !== undefined) row.name = patch.name;
+  if (patch.rating !== undefined) row.rating = patch.rating;
+  if (patch.type !== undefined) row.type = patch.type;
+  if (patch.gender !== undefined) row.gender = patch.gender;
+  if (patch.partnerName !== undefined) row.partner_name = patch.partnerName;
+  if (patch.partnerRating !== undefined) row.partner_rating = patch.partnerRating;
+  if (patch.partnerGender !== undefined) row.partner_gender = patch.partnerGender;
+  if (patch.adminSeedRank !== undefined) row.admin_seed_rank = patch.adminSeedRank;
+  if (patch.adminBracketSlot !== undefined) row.admin_bracket_slot = patch.adminBracketSlot;
+  if (Object.keys(row).length === 0) {
+    const { data, error } = await getClient().from('participants').select('*').eq('id', id).maybeSingle();
+    if (error) throw error;
+    return data ? rowToParticipant(data) : null;
+  }
+  const { data, error } = await getClient().from('participants').update(row).eq('id', id).select().maybeSingle();
+  if (error) throw error;
+  return data ? rowToParticipant(data) : null;
 }
 
 function rowsToMatchResults(rows) {
@@ -167,4 +196,49 @@ export async function setEventPlan(plan) {
     );
   if (error) throw error;
   return plan;
+}
+
+function normalizeOrderMap(o) {
+  if (!o || typeof o !== 'object' || Array.isArray(o)) return {};
+  const out = {};
+  for (const [k, v] of Object.entries(o)) {
+    const n = Number(v);
+    if (Number.isFinite(n)) out[k] = n;
+  }
+  return out;
+}
+
+export async function getBracketAdmin() {
+  const { data, error } = await getClient()
+    .from('bracket_admin')
+    .select('match_display_order')
+    .eq('id', 1)
+    .maybeSingle();
+  if (error) throw error;
+  const mod = data?.match_display_order;
+  return {
+    matchDisplayOrder: {
+      singles: normalizeOrderMap(mod?.singles),
+      doubles: normalizeOrderMap(mod?.doubles),
+    },
+  };
+}
+
+export async function setBracketAdmin(config) {
+  const matchDisplayOrder = {
+    singles: normalizeOrderMap(config?.matchDisplayOrder?.singles),
+    doubles: normalizeOrderMap(config?.matchDisplayOrder?.doubles),
+  };
+  const { error } = await getClient()
+    .from('bracket_admin')
+    .upsert(
+      {
+        id: 1,
+        match_display_order: matchDisplayOrder,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'id' },
+    );
+  if (error) throw error;
+  return getBracketAdmin();
 }

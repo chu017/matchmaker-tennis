@@ -4,9 +4,9 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"npm run dev:server\" \"vite\"",
+    "dev": "concurrently -n server,client -c blue,magenta \"npm run dev:server\" \"node scripts/wait-for-api.mjs && vite\"",
     "dev:server": "node server/index.js",
-    "dev:client": "vite",
+    "dev:client": "node scripts/wait-for-api.mjs && vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "start": "node server/index.js"

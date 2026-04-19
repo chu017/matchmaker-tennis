@@ -17,16 +17,28 @@ function getPairRating(p: StoredParticipant): number {
   return (r1 + r2) / 2
 }
 
+function compareForDraw(a: StoredParticipant, b: StoredParticipant): number {
+  const ar = a.adminSeedRank
+  const br = b.adminSeedRank
+  const aHas = ar != null && ar > 0
+  const bHas = br != null && br > 0
+  if (aHas && bHas && ar !== br) return ar - br
+  if (aHas && !bHas) return -1
+  if (!aHas && bHas) return 1
+  return getPairRating(b) - getPairRating(a)
+}
+
 /**
  * Map **main-draw** entrants only (≤16, already chosen by signup order).
- * Seeds 1…n are assigned by **NTRP** (strongest = #1) for fair bracket placement.
+ * Seeds 1…n follow **admin seed rank** when set, else **NTRP** (strongest = #1).
  */
 export function toTournamentParticipants(stored: StoredParticipant[]): Participant[] {
-  const sorted = [...stored].sort((a, b) => getPairRating(b) - getPairRating(a))
+  const sorted = [...stored].sort(compareForDraw)
   return sorted.map((p, i) => ({
     id: p.id,
     name: getDisplayName(p),
     seed: i + 1,
     rating: getPairRating(p),
+    adminSeedRank: p.adminSeedRank ?? null,
   }))
 }

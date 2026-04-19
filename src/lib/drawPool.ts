@@ -22,10 +22,26 @@ export function splitPoolBySignupOrder(
   maxInDraw: number = MAX_DRAW_PLAYERS,
 ): { inDraw: StoredParticipant[]; waiting: StoredParticipant[] } {
   const pool = [...all.filter((p) => p.type === type)].sort(compareSignupOrder)
-  return {
-    inDraw: pool.slice(0, maxInDraw),
-    waiting: pool.slice(maxInDraw),
-  }
+
+  const forcedWaiting = pool.filter((p) => p.adminBracketSlot === 'waiting')
+  const forcedDraw = pool.filter((p) => p.adminBracketSlot === 'draw')
+  const neutral = pool.filter(
+    (p) => p.adminBracketSlot !== 'waiting' && p.adminBracketSlot !== 'draw',
+  )
+
+  const forcedDrawSorted = [...forcedDraw].sort(compareSignupOrder)
+  const inDrawForced = forcedDrawSorted.slice(0, maxInDraw)
+  const forcedDrawOverflow = forcedDrawSorted.slice(maxInDraw)
+
+  const slotsLeft = maxInDraw - inDrawForced.length
+  const neutralSorted = [...neutral].sort(compareSignupOrder)
+  const neutralInDraw = slotsLeft > 0 ? neutralSorted.slice(0, slotsLeft) : []
+  const neutralWaiting = slotsLeft > 0 ? neutralSorted.slice(slotsLeft) : [...neutralSorted]
+
+  const inDraw = [...inDrawForced, ...neutralInDraw].sort(compareSignupOrder)
+  const waiting = [...forcedWaiting, ...neutralWaiting, ...forcedDrawOverflow].sort(compareSignupOrder)
+
+  return { inDraw, waiting }
 }
 
 /** Short label for lists (local time) */

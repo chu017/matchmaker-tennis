@@ -2,16 +2,9 @@
  * Admin API - requires X-Admin-Key header
  */
 import { isProbablyHtml, parseApiJsonOrError } from './parseApiJson'
+import type { StoredParticipant } from './participantsApi'
 
-export interface StoredParticipant {
-  id: string
-  name: string
-  rating: number
-  type: 'singles' | 'doubles'
-  partnerName?: string | null
-  partnerRating?: number | null
-  createdAt?: string
-}
+export type { StoredParticipant }
 
 function adminHeaders(key: string) {
   return {
@@ -40,6 +33,73 @@ export async function deleteParticipant(id: string, adminKey: string): Promise<v
     headers: adminHeaders(adminKey),
   })
   await parseApiJsonOrError(res)
+}
+
+export interface AdminParticipantPayload {
+  name: string
+  rating: number
+  type: 'singles' | 'doubles'
+  gender: 'male' | 'female'
+  partnerName?: string | null
+  partnerRating?: number | null
+  partnerGender?: 'male' | 'female' | null
+  adminSeedRank?: number | null
+  adminBracketSlot?: 'draw' | 'waiting' | null
+}
+
+export async function updateParticipantAdmin(
+  id: string,
+  payload: AdminParticipantPayload,
+  adminKey: string,
+): Promise<StoredParticipant> {
+  const res = await fetch(`/api/admin/participants/${id}`, {
+    method: 'PATCH',
+    headers: adminHeaders(adminKey),
+    body: JSON.stringify(payload),
+  })
+  const data = await parseApiJsonOrError<{ participant: StoredParticipant }>(res)
+  return data.participant
+}
+
+/** PATCH only main draw / waiting override (saved immediately). */
+export async function patchParticipantBracketSlot(
+  id: string,
+  adminBracketSlot: 'draw' | 'waiting' | null,
+  adminKey: string,
+): Promise<StoredParticipant> {
+  const res = await fetch(`/api/admin/participants/${id}`, {
+    method: 'PATCH',
+    headers: adminHeaders(adminKey),
+    body: JSON.stringify({ adminBracketSlot }),
+  })
+  const data = await parseApiJsonOrError<{ participant: StoredParticipant }>(res)
+  return data.participant
+}
+
+export interface BracketAdminConfig {
+  matchDisplayOrder: {
+    singles: Record<string, number>
+    doubles: Record<string, number>
+  }
+}
+
+export async function fetchBracketAdminConfig(adminKey: string): Promise<BracketAdminConfig> {
+  const res = await fetch('/api/admin/bracket-config', {
+    headers: adminHeaders(adminKey),
+  })
+  return parseApiJsonOrError<BracketAdminConfig>(res)
+}
+
+export async function saveBracketAdminConfig(
+  config: BracketAdminConfig,
+  adminKey: string,
+): Promise<BracketAdminConfig> {
+  const res = await fetch('/api/admin/bracket-config', {
+    method: 'PUT',
+    headers: adminHeaders(adminKey),
+    body: JSON.stringify(config),
+  })
+  return parseApiJsonOrError<BracketAdminConfig>(res)
 }
 
 export async function setMatchResult(

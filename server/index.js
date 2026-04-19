@@ -10,12 +10,15 @@ import { fileURLToPath } from 'url';
 import {
   getParticipants,
   addParticipant,
+  updateParticipant,
   deleteParticipant,
   getMatchResults,
   setMatchResult,
   clearMatchResults,
   getEventPlan,
   setEventPlan,
+  getBracketAdmin,
+  setBracketAdmin,
   getStoreBackend,
 } from './store.js';
 import { getSupabaseHealth } from './supabaseHealth.js';
@@ -189,6 +192,146 @@ app.delete('/api/admin/participants/:id', requireAdmin, async (req, res) => {
       return res.status(404).json({ error: 'Participant not found' });
     }
     res.json({ deleted: removed });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+function clampNtrpRating(label, value) {
+  const r = Number(value);
+  if (!Number.isFinite(r)) {
+    throw new Error(`${label} must be a number`);
+  }
+  if (r < 2 || r > 5.5) {
+    throw new Error(`${label} must be between 2.0 and 5.5`);
+  }
+  return Math.round(r * 10) / 10;
+}
+
+/** Merge admin PATCH into a participant row and return fields to persist. */
+function mergeParticipantAdminUpdate(current, body) {
+  const b = body && typeof body === 'object' ? body : {};
+  const next = { ...current };
+  if (b.name !== undefined) {
+    if (typeof b.name !== 'string' || !b.name.trim()) {
+      throw new Error('name must be a non-empty string');
+    }
+    next.name = b.name.trim();
+  }
+  if (b.rating !== undefined) {
+    next.rating = clampNtrpRating('rating', b.rating);
+  }
+  if (b.type !== undefined) {
+    if (b.type !== 'singles' && b.type !== 'doubles') {
+      throw new Error('type must be singles or doubles');
+    }
+    next.type = b.type;
+  }
+  if (b.gender !== undefined) {
+    if (b.gender !== 'male' && b.gender !== 'female') {
+      throw new Error('gender must be male or female');
+    }
+    next.gender = b.gender;
+  }
+  if (b.partnerName !== undefined) {
+    next.partnerName = typeof b.partnerName === 'string' ? b.partnerName.trim() || null : null;
+  }
+  if (b.partnerRating !== undefined) {
+    if (b.partnerRating === null || b.partnerRating === '') {
+      next.partnerRating = null;
+    } else {
+      next.partnerRating = clampNtrpRating('partnerRating', b.partnerRating);
+    }
+  }
+  if (b.partnerGender !== undefined) {
+    if (b.partnerGender !== null && b.partnerGender !== 'male' && b.partnerGender !== 'female') {
+      throw new Error('partnerGender must be male, female, or null');
+    }
+    next.partnerGender = b.partnerGender;
+  }
+  if (b.adminSeedRank !== undefined) {
+    if (b.adminSeedRank === null || b.adminSeedRank === '') {
+      next.adminSeedRank = null;
+    } else {
+      const s = Number(b.adminSeedRank);
+      if (!Number.isInteger(s) || s < 1 || s > 64) {
+        throw new Error('adminSeedRank must be an integer 1–64, or null/empty to use NTRP only');
+      }
+      next.adminSeedRank = s;
+    }
+  }
+  if (b.adminBracketSlot !== undefined) {
+    if (b.adminBracketSlot === null || b.adminBracketSlot === '') {
+      next.adminBracketSlot = null;
+    } else if (b.adminBracketSlot === 'draw' || b.adminBracketSlot === 'waiting') {
+      next.adminBracketSlot = b.adminBracketSlot;
+    } else {
+      throw new Error('adminBracketSlot must be "draw", "waiting", or null');
+    }
+  }
+  if (next.type === 'singles') {
+    next.partnerName = null;
+    next.partnerRating = null;
+    next.partnerGender = null;
+  } else if (next.type === 'doubles') {
+    if (!next.partnerName?.trim()) {
+      throw new Error('Doubles requires a partner name');
+    }
+    if (next.partnerGender !== 'male' && next.partnerGender !== 'female') {
+      throw new Error('Doubles requires partner gender (male or female)');
+    }
+  }
+  if (next.gender !== 'male' && next.gender !== 'female') {
+    throw new Error('gender (male or female) is required');
+  }
+  return {
+    name: next.name,
+    rating: next.rating,
+    type: next.type,
+    gender: next.gender,
+    partnerName: next.partnerName,
+    partnerRating: next.partnerRating,
+    partnerGender: next.partnerGender,
+    adminSeedRank: next.adminSeedRank ?? null,
+    adminBracketSlot: next.adminBracketSlot ?? null,
+  };
+}
+
+// Admin: update participant (name, ratings, type, seed rank, etc.)
+app.patch('/api/admin/participants/:id', requireAdmin, async (req, res) => {
+  try {
+    const all = await getParticipants();
+    const current = all.find((p) => p.id === req.params.id);
+    if (!current) {
+      return res.status(404).json({ error: 'Participant not found' });
+    }
+    const patch = mergeParticipantAdminUpdate(current, req.body);
+    const updated = await updateParticipant(req.params.id, patch);
+    res.json({ participant: updated });
+  } catch (err) {
+    res.status(400).json({ error: err.message || 'Update failed' });
+  }
+});
+
+// Admin: bracket display order (match list order in admin)
+app.get('/api/admin/bracket-config', requireAdmin, async (_, res) => {
+  try {
+    res.json(await getBracketAdmin());
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/admin/bracket-config', requireAdmin, async (req, res) => {
+  try {
+    const body = req.body && typeof req.body === 'object' ? req.body : {};
+    const saved = await setBracketAdmin({
+      matchDisplayOrder: {
+        singles: body.matchDisplayOrder?.singles,
+        doubles: body.matchDisplayOrder?.doubles,
+      },
+    });
+    res.json(saved);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

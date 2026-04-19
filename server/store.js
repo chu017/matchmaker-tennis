@@ -41,6 +41,7 @@ function getImpl() {
 
 export const getParticipants = (...args) => getImpl().getParticipants(...args);
 export const addParticipant = (...args) => getImpl().addParticipant(...args);
+export const updateParticipant = (...args) => getImpl().updateParticipant(...args);
 export const deleteParticipant = (...args) => getImpl().deleteParticipant(...args);
 export const getMatchResults = (...args) => getImpl().getMatchResults(...args);
 export const setMatchResult = (...args) => getImpl().setMatchResult(...args);
@@ -48,6 +49,8 @@ export const clearMatchResult = (...args) => getImpl().clearMatchResult(...args)
 export const clearMatchResults = (...args) => getImpl().clearMatchResults(...args);
 export const getEventPlan = (...args) => getImpl().getEventPlan(...args);
 export const setEventPlan = (...args) => getImpl().setEventPlan(...args);
+export const getBracketAdmin = (...args) => getImpl().getBracketAdmin(...args);
+export const setBracketAdmin = (...args) => getImpl().setBracketAdmin(...args);
 
 export function getStoreBackend() {
   return useSupabase() ? 'supabase' : 'json';

@@ -57,7 +57,7 @@ If you still see the **Legacy** section: use **`service_role`** (long JWT) as `S
 
 **Row shapes (for reference)**
 
-- **participants:** `id` (uuid), `name`, `rating`, `type` (`singles`|`doubles`), `partner_name`, `partner_rating`, `created_at`
+- **participants:** `id` (uuid), `name`, `rating`, `type` (`singles`|`doubles`), `partner_name`, `partner_rating`, `created_at`, plus later migrations (e.g. `admin_seed_rank`, `admin_bracket_slot` for admin draw/waiting overrides — run every `.sql` in `supabase/migrations/` you have not applied yet, then `NOTIFY pgrst, 'reload schema';` if the API still reports a missing column)
 - **match_results:** `draw_type` + `match_id` (composite PK), `winner_id`, `score`, `updated_at`
 - **event_plan:** `id = 1`, `payload` (jsonb — same structure your admin UI saves today)
 

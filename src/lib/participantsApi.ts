@@ -23,6 +23,10 @@ export interface StoredParticipant {
   waiverUserAgent?: string | null
   /** Legal name typed when acknowledging the waiver (may differ from `name`) */
   waiverLegalName?: string | null
+  /** Admin-only: lower = stronger seed when set; omit or null to use NTRP sort only */
+  adminSeedRank?: number | null
+  /** Admin-only: override main draw vs waiting list (null = use signup order among neutrals) */
+  adminBracketSlot?: 'draw' | 'waiting' | null
 }
 
 export function getDisplayName(p: StoredParticipant): string {
