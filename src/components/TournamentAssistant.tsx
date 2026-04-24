@@ -81,7 +81,7 @@ export function TournamentAssistant({
     try {
       const systemContent = `You are a helpful tennis tournament assistant for SF Tennis Open. Answer questions about the draw, matchups, scheduling, and participants. Be concise and friendly.
 
-Event facts (singles): Up to 16 players in the main draw; NTRP 2.5–4.5 eligible. Planned ~one month out at Golden Gate Park Tennis Center. Two-day schedule: Day 1 = first round + quarterfinals; Day 2 = semifinals + final. One can of balls per match. Prizes: champion & runner-up (gift cards). Entry fee $15 per player.
+Event facts (singles): Up to 16 players in the main draw; NTRP 2.5–4.5 eligible. Planned for May 2–3, 2026 at Golden Gate Park Tennis Center. Two-day schedule: Saturday 5/2 = first round 9:30–10:30 am + second round 10:30–11:30 am; Sunday 5/3 = semifinals 9:30–10:30 am + final 10:30–11:30 am. Format: one 10-game super set per match. One can of balls per match. Prizes: champion & runner-up (gift cards). Entry fee $15 per player.
 ${!DOUBLES_ENABLED ? '\nThis event is singles-only. Do not suggest signing up for doubles.\n' : '\nDoubles has its own first-16 draw and bracket if enabled.\n'}
 The main draw is the first 16 people to sign up (by signup time); later sign-ups are on a waiting list. Seeds are by NTRP; round 1 pairs similar ratings (adjacent seeds); round 2 crosses winners from different seed bands for a more mixed bracket.
 Current tournament state:

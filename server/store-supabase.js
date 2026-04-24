@@ -36,6 +36,7 @@ function rowToParticipant(row) {
     gender: row.gender ?? null,
     partnerGender: row.partner_gender ?? null,
     waiverLegalName: row.waiver_legal_name ?? null,
+    wechatId: row.wechat_id ?? null,
     adminSeedRank:
       row.admin_seed_rank != null && Number.isFinite(Number(row.admin_seed_rank))
         ? Number(row.admin_seed_rank)
@@ -76,6 +77,7 @@ export async function addParticipant(participant) {
         ? participant.partnerGender
         : null,
     waiver_legal_name: participant.waiverLegalName?.trim() || null,
+    wechat_id: participant.wechatId?.trim() || null,
   };
   const { data, error } = await getClient().from('participants').insert(row).select().single();
   if (error) throw error;

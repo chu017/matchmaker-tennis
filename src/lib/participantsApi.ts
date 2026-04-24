@@ -23,6 +23,8 @@ export interface StoredParticipant {
   waiverUserAgent?: string | null
   /** Legal name typed when acknowledging the waiver (may differ from `name`) */
   waiverLegalName?: string | null
+  /** WeChat ID for communication */
+  wechatId?: string | null
   /** Admin-only: lower = stronger seed when set; omit or null to use NTRP sort only */
   adminSeedRank?: number | null
   /** Admin-only: override main draw vs waiting list (null = use signup order among neutrals) */
@@ -68,6 +70,7 @@ export async function addParticipant(data: {
   waiverAccepted: boolean
   waiverVersion: string
   waiverLegalName: string
+  wechatId: string
 }): Promise<StoredParticipantWithBracketStatus> {
   const res = await fetch('/api/participants', {
     method: 'POST',

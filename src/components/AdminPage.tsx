@@ -642,6 +642,15 @@ export function AdminPage({ onBack }: AdminPageProps) {
                           />
                         </label>
                         <label className="block min-w-0">
+                          <span className="text-pink-text-muted text-xs">WeChat ID</span>
+                          <input
+                            type="text"
+                            readOnly
+                            value={p.wechatId || '—'}
+                            className="mt-1 w-full min-h-[40px] px-3 rounded-lg border border-pink-soft bg-pink-soft/30 text-pink-text cursor-default select-all"
+                          />
+                        </label>
+                        <label className="block min-w-0">
                           <span className="text-pink-text-muted text-xs">NTRP</span>
                           <select
                             value={p.rating}
@@ -832,6 +841,15 @@ export function AdminPage({ onBack }: AdminPageProps) {
                             value={p.name}
                             onChange={(e) => mergeParticipantDraft(p.id, { name: e.target.value })}
                             className="mt-1 w-full min-h-[40px] px-3 rounded-lg border border-pink-soft bg-white text-pink-text"
+                          />
+                        </label>
+                        <label className="block min-w-0">
+                          <span className="text-pink-text-muted text-xs">WeChat ID</span>
+                          <input
+                            type="text"
+                            readOnly
+                            value={p.wechatId || '—'}
+                            className="mt-1 w-full min-h-[40px] px-3 rounded-lg border border-pink-soft bg-pink-soft/30 text-pink-text cursor-default select-all"
                           />
                         </label>
                         <label className="block min-w-0">

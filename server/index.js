@@ -124,6 +124,7 @@ app.post('/api/participants', async (req, res) => {
       waiverAccepted,
       waiverVersion,
       waiverLegalName,
+      wechatId,
     } = req.body;
     if (!name || typeof name !== 'string' || !name.trim()) {
       return res.status(400).json({ error: 'name is required' });
@@ -154,6 +155,7 @@ app.post('/api/participants', async (req, res) => {
       waiverIp: getClientIp(req),
       waiverUserAgent: ua ? ua.slice(0, 2048) : null,
       waiverLegalName: String(waiverLegalName).trim(),
+      wechatId: typeof wechatId === 'string' ? wechatId.trim() : null,
     });
     const all = await getParticipants();
     const bracketStatus = bracketStatusForParticipant(all, participant.type, participant.id);

@@ -21,6 +21,7 @@ const selectClassName =
 
 export function SignUpForm() {
   const [name, setName] = useState('')
+  const [wechatId, setWechatId] = useState('')
   const [rating, setRating] = useState(() => ntrpOptionValue(DEFAULT_SELF_RATING))
   const [type, setType] = useState<'singles' | 'doubles'>('singles')
   const [partnerName, setPartnerName] = useState('')
@@ -68,7 +69,12 @@ export function SignUpForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const n = name.trim()
+    const wx = wechatId.trim()
     if (!n) return
+    if (!wx) {
+      setError('Please enter your WeChat ID')
+      return
+    }
     if (!waiverAccepted) {
       setError('Please read the waiver and check the box to agree before signing up.')
       return
@@ -107,6 +113,7 @@ export function SignUpForm() {
         waiverAccepted: true,
         waiverVersion: WAIVER_VERSION,
         waiverLegalName: waiverLegalName.trim(),
+        wechatId: wx,
       })
       setSuccessDetail(created.bracketStatus === 'waiting' ? 'waiting' : 'draw')
       setSuccess(true)
@@ -114,6 +121,7 @@ export function SignUpForm() {
       setWaiverLegalName('')
       setWaiverModalOpened(false)
       setName('')
+      setWechatId('')
       setRating(ntrpOptionValue(DEFAULT_SELF_RATING))
       setPartnerName('')
       setPartnerRating(ntrpOptionValue(DEFAULT_SELF_RATING))
@@ -137,7 +145,7 @@ export function SignUpForm() {
         </p>
         <p>
           <strong>16-player singles</strong> tournament: open to self-rated players <strong>NTRP 2.5–4.5</strong>.
-          The event is planned for approximately <strong>one month from now</strong> at{' '}
+          The event is on <strong>May 2–3, 2026</strong> at{' '}
           <strong>Golden Gate Park Tennis Center</strong>.
         </p>
         {DOUBLES_ENABLED && (
@@ -149,10 +157,13 @@ export function SignUpForm() {
         <ul className="list-disc list-inside space-y-1 text-xs sm:text-sm">
           <li>Two-day format</li>
           <li>
-            <strong>Day 1:</strong> First round and quarterfinals
+            <strong>Saturday 5/2:</strong> First round 9:30–10:30 am · Second round 10:30–11:30 am
           </li>
           <li>
-            <strong>Day 2:</strong> Semifinals and final
+            <strong>Sunday 5/3:</strong> Semifinals 9:30–10:30 am · Final 10:30–11:30 am
+          </li>
+          <li>
+            <strong>Format:</strong> One 10-game super set per match
           </li>
           <li>One can of tennis balls provided per match</li>
           <li>
@@ -203,6 +214,14 @@ export function SignUpForm() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Player name"
+          required
+          className="w-full min-h-[44px] px-4 py-3 rounded-xl bg-pink-soft/60 border-0 text-pink-text placeholder-pink-text-muted focus:outline-none focus:ring-2 focus:ring-pink-primary/40 touch-manipulation"
+        />
+        <input
+          type="text"
+          value={wechatId}
+          onChange={(e) => setWechatId(e.target.value)}
+          placeholder="WeChat ID"
           required
           className="w-full min-h-[44px] px-4 py-3 rounded-xl bg-pink-soft/60 border-0 text-pink-text placeholder-pink-text-muted focus:outline-none focus:ring-2 focus:ring-pink-primary/40 touch-manipulation"
         />

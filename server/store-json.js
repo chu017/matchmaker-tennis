@@ -52,6 +52,7 @@ export async function getParticipants() {
     gender: p.gender ?? null,
     partnerGender: p.partnerGender ?? null,
     waiverLegalName: p.waiverLegalName ?? null,
+    wechatId: p.wechatId ?? null,
     adminSeedRank:
       p.admin_seed_rank != null && Number.isFinite(Number(p.admin_seed_rank))
         ? Number(p.admin_seed_rank)
@@ -89,6 +90,7 @@ export async function addParticipant(participant) {
         ? participant.partnerGender
         : null,
     waiverLegalName: participant.waiverLegalName?.trim() || null,
+    wechatId: participant.wechatId?.trim() || null,
     adminSeedRank: null,
     adminBracketSlot: null,
   };
